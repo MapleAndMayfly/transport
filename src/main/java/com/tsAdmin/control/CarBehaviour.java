@@ -7,6 +7,10 @@ import com.tsAdmin.model.Car;
 import com.tsAdmin.model.Demand;
 import com.tsAdmin.model.Car.CarState;
 
+/**
+ * 车辆行为类，因为放在车辆类里会导致很长，故独立出来
+ * 每辆车都有一个CarBehaviour对象
+ */
 public class CarBehaviour
 {
     Car car;
@@ -41,9 +45,6 @@ public class CarBehaviour
         return !isRefused;
     }
 
-    /**
-     * 状态转换函数
-     */
     public void changeState()
     {
         Random random = new Random();
@@ -54,8 +55,8 @@ public class CarBehaviour
         switch (car.getState())
         {
             case ORDER_TAKEN:
-                if      (randomNumber < 90) nextState = CarState.LOADING;
-                else if (randomNumber < 95) nextState = CarState.ORDER_TAKEN;
+                if      (randomNumber < 95) nextState = CarState.LOADING;
+                else if (randomNumber < 98) nextState = CarState.ORDER_TAKEN;
                 else                        nextState = CarState.FREEZE;
                 break;
 
@@ -73,9 +74,8 @@ public class CarBehaviour
                 break;
 
             case UNLOADING:
-                if      (randomNumber < 58) nextState = CarState.FREEZE;
-                else if (randomNumber < 98) nextState = CarState.AVAILABLE;
-                else                        nextState = CarState.LOADING;
+                if      (randomNumber < 97) nextState = CarState.AVAILABLE;
+                else                        nextState = CarState.FREEZE;
                 break;
 
             case FREEZE:
@@ -118,11 +118,48 @@ public class CarBehaviour
                 break;
         }
 
-        if (car.getPrevState() == CarState.ORDER_TAKEN && car.getState() == CarState.LOADING)
+        // TODO: 删除以下，位置更新放在前端
+        if (car.getState() == CarState.ORDER_TAKEN && nextState == CarState.LOADING)
+        {
+            DBManager.updateCarPos(car);
             car.setPosition(car.getDemand().getOrigin());
-        else if (car.getPrevState() == CarState.TRANSPORTING && car.getState() == CarState.UNLOADING)
+        }
+        else if (car.getState() == CarState.TRANSPORTING && nextState == CarState.UNLOADING)
+        {
+            DBManager.updateCarPos(car);
             car.setPosition(car.getDemand().getDestination());
+        }
+        // ENDTODO
+
+        // 装货后立马卸货的情况下，下一状态必定是装货
+        if (car.getPrevState() == CarState.LOADING && car.getState() == CarState.UNLOADING)
+        {
+            nextState = CarState.LOADING;
+        }
 
         car.setState(nextState);
+        DBManager.updateCarState(car);
+    }
+
+    /**
+     * 状态转换后获取任务时间
+     */
+    public int getBehaviourTime() 
+    {
+        switch (car.getState()) 
+        {
+        case ORDER_TAKEN:
+            return (int)(car.orderTakenLength() / 1000);
+        case TRANSPORTING:
+            return (int)(car.getDemand().routeLength() / 1000);
+        case LOADING:
+            return (int)(1.2 * car.getLoad());
+        case UNLOADING:
+            return (int)(0.9 * car.getLoad());
+        case FREEZE:
+            return 30;
+        default:
+            return 0;
+        }
     }
 }

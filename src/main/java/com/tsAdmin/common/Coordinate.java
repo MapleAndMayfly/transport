@@ -12,6 +12,11 @@ public class Coordinate
         this.lon = lon;
     }
 
+    public double[] toArray()
+    {
+        return new double[] { lat, lon };
+    }
+
     /**
      * 计算两坐标直线距离
      * @param c1 第一个坐标

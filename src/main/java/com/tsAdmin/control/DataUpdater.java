@@ -1,5 +1,7 @@
 package com.tsAdmin.control;
 
+import com.tsAdmin.model.DemandList;
+
 public class DataUpdater implements Runnable
 {
     @Override
@@ -19,7 +21,7 @@ public class DataUpdater implements Runnable
             {
                 lastUpdate = currentTime;
 
-                // TODO: Update
+                DemandList.generateDemand(2);
             }
         }
     }

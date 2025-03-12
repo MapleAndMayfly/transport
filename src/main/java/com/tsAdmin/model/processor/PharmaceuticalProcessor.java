@@ -5,9 +5,9 @@ import com.tsAdmin.common.Coordinate;
 /** 药材加工厂 */
 public class PharmaceuticalProcessor extends Processor
 {
-    public PharmaceuticalProcessor(String name, Coordinate position)
+    public PharmaceuticalProcessor(String uuid, String name, Coordinate position)
     {
-        super(name, position);
+        super(uuid, name, position);
     }
 
     @Override
@@ -18,5 +18,4 @@ public class PharmaceuticalProcessor extends Processor
         else
         return name;
     }
-
 }

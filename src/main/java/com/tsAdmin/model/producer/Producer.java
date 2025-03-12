@@ -1,40 +1,40 @@
 package com.tsAdmin.model.producer;
 
+import java.util.UUID;
 import java.util.Random;
 
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.model.Demand;
+import com.tsAdmin.model.Manufacturer;
 import com.tsAdmin.model.Product;
 import com.tsAdmin.model.processor.Processor;
 
 /** 生产厂(抽象) */
-public abstract class Producer
+public abstract class Producer extends Manufacturer
 {
-    protected String name;
-    protected Coordinate position;
+    protected static final Random RANDOM = new Random();
 
-    Producer(String name, Coordinate position)
+    protected Producer(String uuid, String name, Coordinate position)
     {
-        this.name = name;
-        this.position = position;
-    }
-
-    public Demand produceDemand(Product product, Processor processor)
-    {
-        product.setQuantity(generateRandomQuantity());
-        Demand demand = new Demand();
-        demand.setOrigin(position);
-        demand.setDestination(processor.getPosition());
-        demand.setQuantity(product.getQuantity());
-        return demand;
-    }
-    
-
-    private int generateRandomQuantity() {
-        return new Random().nextInt(getMaxQuantity() - getMinQuantity() + 1) + getMinQuantity();
+        super(uuid, name, position);
     }
 
     protected abstract int getMinQuantity();
     protected abstract int getMaxQuantity();
-    protected abstract String getProducerName();
+
+    public Demand createDemand(Product product, Processor processor)
+    {
+        String uuid = UUID.randomUUID().toString().replace("-", "");
+        product.setQuantity(getRandQuantity());
+
+        Demand demand = new Demand(uuid, position, processor.getPosition(), product.getType());
+        demand.setQuantity(product.getQuantity());
+
+        return demand;
+    }
+
+    public int getRandQuantity()
+    {
+        return RANDOM.nextInt(getMinQuantity(), getMaxQuantity() + 1);
+    }
 }

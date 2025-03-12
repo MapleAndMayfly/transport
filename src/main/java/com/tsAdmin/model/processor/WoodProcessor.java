@@ -5,9 +5,9 @@ import com.tsAdmin.common.Coordinate;
 /** 木材加工厂 */
 public class WoodProcessor extends Processor
 {
-    public WoodProcessor(String name, Coordinate position)
+    public WoodProcessor(String uuid, String name, Coordinate position)
     {
-        super(name, position);
+        super(uuid, name, position);
     }
 
     public String getProcessorName()

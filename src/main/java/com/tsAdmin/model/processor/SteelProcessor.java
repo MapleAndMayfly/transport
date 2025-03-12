@@ -5,9 +5,9 @@ import com.tsAdmin.common.Coordinate;
 /** 钢材加工厂 */
 public class SteelProcessor extends Processor
 {
-    public SteelProcessor(String name, Coordinate position)
+    public SteelProcessor(String uuid, String name, Coordinate position)
     {
-        super(name, position);
+        super(uuid, name, position);
     }
 
     @Override
