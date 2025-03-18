@@ -23,26 +23,9 @@ public class CarBehaviour
         this.car = car;
     }
 
-    /**
-     * 判断是否接单
-     * @param demand 判断的需求
-     * @return 是否接单
-     */
-    public boolean doAccept(Demand demand)
+    public void tick()
     {
-        boolean isRefused = false;
-
-        double loadRatio = (double)demand.getQuantity() / car.getMaxLoad();
-        int pretransLength = (int)Coordinate.distance(car.getPosition(), demand.getOrigin());
-
-        // 满足以下任一条件则拒绝接单
-        isRefused = pretransLength > car.getMaxStartDistance()
-                 || demand.routeLength() > car.getMaxDemandLength()
-                 || loadRatio < car.getMinLoadPercent()
-                 || loadRatio > 5
-                 || (pretransLength / demand.routeLength()) / loadRatio > car.getMaxDistanceToLengthRatio();
-
-        return !isRefused;
+        // TODO: 车辆向前进一个周期
     }
 
     public void changeState()
@@ -118,19 +101,6 @@ public class CarBehaviour
                 break;
         }
 
-        // TODO: 删除以下，位置更新放在前端
-        if (car.getState() == CarState.ORDER_TAKEN && nextState == CarState.LOADING)
-        {
-            DBManager.updateCarPos(car);
-            car.setPosition(car.getDemand().getOrigin());
-        }
-        else if (car.getState() == CarState.TRANSPORTING && nextState == CarState.UNLOADING)
-        {
-            DBManager.updateCarPos(car);
-            car.setPosition(car.getDemand().getDestination());
-        }
-        // ENDTODO
-
         // 装货后立马卸货的情况下，下一状态必定是装货
         if (car.getPrevState() == CarState.LOADING && car.getState() == CarState.UNLOADING)
         {
@@ -149,9 +119,9 @@ public class CarBehaviour
         switch (car.getState()) 
         {
         case ORDER_TAKEN:
-            return (int)(car.orderTakenLength() / 1000);
+            return 0;//(int)(car.orderTakenLength() / 1000);
         case TRANSPORTING:
-            return (int)(car.getDemand().routeLength() / 1000);
+            return 0;//(int)(car.getDemand().routeLength() / 1000);
         case LOADING:
             return (int)(1.2 * car.getLoad());
         case UNLOADING:

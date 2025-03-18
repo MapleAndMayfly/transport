@@ -82,14 +82,14 @@ public class DBManager
         String table = POI_TABLES.get(type);
         if (table == null) throw new IllegalArgumentException("Invalid table type: " + type);
 
-        String sql = "SELECT UUID, name, location_lat, location_lon FROM " + table + " ORDER BY RAND() LIMIT 1";
+        String sql = "SELECT location_ID, name, location_lat, location_lon FROM " + table + " ORDER BY RAND() LIMIT 1";
         Record rawData = Db.findFirst(sql);
 
         Map<String, String> POIData = Map.of(
-            "UUID", rawData.get("UUID"),
+            "UUID", rawData.get("location_ID"),
             "name", rawData.get("name"),
-            "lat", rawData.get("location_lat"),
-            "lon", rawData.get("location_lon")
+            "lat", rawData.get("location_lat").toString(),
+            "lon", rawData.get("location_lon").toString()
         );
         return POIData;
     }

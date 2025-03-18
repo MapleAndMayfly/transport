@@ -41,24 +41,17 @@ public class Car
         FREEZE
     }
 
-    private String uuid;            // 唯一标识符
-    private int maxLoad;            // 车辆核载
-    // private int maxVolume;       // 车辆容积
-    private int load;               // 车辆载重
-    private CarType carType;        // 车辆类型
-    private Coordinate position;    // 车辆位置
-    private Demand demand;          // 车辆订单
-    private CarBehaviour behaviour; // 车辆行为
-    private CarState currState;     // 当前车辆状态
-    private CarState prevState;     // 上一车辆状态
-    private Timer stateTimer;       // 状态计时器
-
-    // TODO: 改以下
-    private double maxStartDistance=Double.POSITIVE_INFINITY; // 可接受的最大当前位置到需求起点距离
-    private double maxDemandLength=Double.POSITIVE_INFINITY;   // 可接受的最大需求路线长度
-    private double maxDistanceToLengthRatio=1000; // 最大起点距离与需求长度的比值
-    private double minLoadPercent=0.45; // 最小载荷和车辆载重的比值
-    // ENDTODO
+    private String uuid;                            // 唯一标识符
+    private int maxLoad;                            // 车辆核载
+    // private int maxVolume;                       // 车辆容积
+    private int load;                               // 车辆载重
+    private CarType carType;                        // 车辆类型
+    private Coordinate position;                    // 车辆位置
+    private Assignment assignment;                  // 车辆订单
+    private CarBehaviour behaviour;                 // 车辆行为
+    private CarState currState;                     // 当前车辆状态
+    private CarState prevState;                     // 上一车辆状态
+    private Timer stateTimer;                       // 状态计时器
 
     public Car(String uuid, CarType carType, int maxLoad, Coordinate position)
     {
@@ -76,14 +69,11 @@ public class Car
     public void setLoad(int load) { this.load = load; }
     public void setType(CarType carType) { this.carType = carType; }
     public void setPosition(Coordinate position) { this.position = position; }
-    public void setDemand(Demand demand) { this.demand = demand; }
     public void setState(CarState newState)
     {
         prevState = currState;
         currState = newState;
     }
-
-    public void setLoad() { load = Math.max(demand.getQuantity(), maxLoad); }
 
     // Getter
     public String getUUID() { return uuid; }
@@ -91,23 +81,13 @@ public class Car
     // public int getMaxVolume() { return maxVolume; }
     public int getLoad() { return load; }
     public Coordinate getPosition() { return position; }
-    public Demand getDemand() { return demand; }
-    public CarBehaviour getBehaviour() { return behaviour; }
+    public Demand getNextDemand() { return assignment.getNextDemand(); }
+    public Demand getLastDemand() { return assignment.getLastDemand(); }
+    // public CarBehaviour getBehaviour() { return behaviour; }
     public CarState getState() { return currState; }
     public CarState getPrevState() { return prevState; }
     public Timer getStateTimer() { return stateTimer; }
 
     public boolean isType(CarType carType) { return this.carType == carType; }
-
-    // TODO:改以下
-    public double getMaxStartDistance() { return maxStartDistance; }
-    public double getMaxDemandLength() { return maxDemandLength; }
-    public double getMaxDistanceToLengthRatio() { return maxDistanceToLengthRatio; }
-    public double getMinLoadPercent() { return minLoadPercent; }
-    // ENDTODO
-
-    public int orderTakenLength()
-    {
-        return (int)Coordinate.distance(position, demand.getOrigin());
-    }
+    public void tick() { behaviour.tick(); }
 }

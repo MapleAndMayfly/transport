@@ -21,6 +21,7 @@ public class DataUpdater implements Runnable
             {
                 lastUpdate = currentTime;
 
+                // 每周期调用以下内容
                 DemandList.generateDemand(2);
             }
         }
