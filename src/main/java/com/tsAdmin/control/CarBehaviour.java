@@ -2,9 +2,7 @@ package com.tsAdmin.control;
 
 import java.util.Random;
 
-import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.model.Car;
-import com.tsAdmin.model.Demand;
 import com.tsAdmin.model.Car.CarState;
 
 /**
