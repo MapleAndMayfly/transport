@@ -20,7 +20,7 @@ public class CarList
 
     private static final Random RANDOM = new Random();
 
-    private static final int[] LOADS = { 2, 3, 5, 8, 10, 15, 20, 25, 30 };
+    private static final int[] LOADS = { 2000, 3000, 5000, 8000, 10000, 15000, 20000, 25000, 30000 };
     private static final Coordinate defaultLocation = new Coordinate(30.67646, 104.10248);
     private static int carNum = 10;
 
@@ -30,7 +30,6 @@ public class CarList
     {
         if (DBManager.isTableEmpty("car"))
         {
-            // TODO: 车辆应手动注册
             for (int i = 0; i < carNum; i++)
             {
                 Record carRecord = new Record();
@@ -49,7 +48,7 @@ public class CarList
                 }
                 else 
                 {
-                    carRecord.set("type", "OVERSIZED").set("maxload", 30);
+                    carRecord.set("type", "OVERSIZED").set("maxload", 30000);
                 }
 
                 Db.save("car", carRecord);
@@ -63,7 +62,8 @@ public class CarList
         {
             String uuid = record.getStr("UUID");
             CarType carType = CarType.valueOf(record.getStr("type"));
-            int maxload = record.getInt("maxload");
+            int maxLoad = record.getInt("maxload");
+            int maxVolume = record.getInt("maxvolume");
             int load = record.getInt("load");
             double lat = record.getDouble("location_lat");
             double lon = record.getDouble("location_lon");
@@ -71,7 +71,7 @@ public class CarList
             CarState prevState = CarState.valueOf(record.getStr("prestate"));
             int time = record.getInt("time");
 
-            Car car = new Car(uuid, carType, maxload, new Coordinate(lat, lon));
+            Car car = new Car(uuid, carType, maxLoad, maxVolume, new Coordinate(lat, lon));
             car.setLoad(load);
             // 两次setState: 第一次将上一状态set为当前状态，第二次set会自动将其转移至上一状态
             car.setState(prevState);

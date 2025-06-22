@@ -7,22 +7,23 @@ public class DataUpdater implements Runnable
     @Override
     public void run()
     {
-        final double updateInterval = 5e3;              // 每5s更新一次
-        long lastUpdate = System.currentTimeMillis();
-        long currentTime;
+        final double UPDATE_INTERVAL = 5e3;             // 每5s一个周期
+        final int GENERATE_NUMBER = 2;                  // 每周期生成2个
 
         boolean isRunning = true;                       // 线程运行旗标
+        long lastUpdate = System.currentTimeMillis();
+        long currentTime;
 
         while (isRunning)
         {
             currentTime = System.currentTimeMillis();
 
-            if (currentTime - lastUpdate > updateInterval)
+            if (currentTime - lastUpdate > UPDATE_INTERVAL)
             {
                 lastUpdate = currentTime;
 
                 // 每周期调用以下内容
-                DemandList.generateDemand(2);
+                DemandList.generateDemand(GENERATE_NUMBER);
             }
         }
     }

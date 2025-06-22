@@ -32,6 +32,9 @@ public class DemandList
                 double destLon = record.getDouble("destination_lon");
                 ProductType type = ProductType.valueOf(record.getStr("type"));
                 int quantity = record.getInt("quantity");
+                int volume = record.getInt("volume");
+
+                Product product = new Product(type)
 
                 Demand demand = new Demand(
                     uuid,
@@ -55,17 +58,15 @@ public class DemandList
     {
         for (; num > 0; num--)
         {
-            // 随机选择一个产品类型
+            // 随机生成一个产品
             ProductType type = Product.getRandType();
 
-            Product product = new Product(type);
+            //根据产品类型选择起终点
             Producer producer = ProducerFactory.getRandProducer(type);
-
-            //根据产品类型选择加工厂（目的地）
             Processor processor = ProcessorFactory.getRandProcessor(type);
 
-            // 生产需求，并把需求存入demandList动态数组当中且存入数据库
-            Demand demand = producer.createDemand(product, processor);
+            // 生产需求，并把需求存入demandList与数据库当中
+            Demand demand = producer.createDemand(type, processor);
             DemandList.demandList.put(demand.getUUID(), demand);
             DBManager.saveDemand(demand);
         }

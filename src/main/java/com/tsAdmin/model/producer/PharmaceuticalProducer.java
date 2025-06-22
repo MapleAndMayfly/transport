@@ -11,6 +11,12 @@ public class PharmaceuticalProducer extends Producer
     }
 
     @Override
+    protected int getMinDensity() { return 700; }
+
+    @Override
+    protected int getMaxDensity() { return 1000; }
+
+    @Override
     protected int getMinQuantity() { return 5; }
 
     @Override

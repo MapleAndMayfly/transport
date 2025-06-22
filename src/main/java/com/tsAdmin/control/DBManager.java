@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.Db;
+
 import com.tsAdmin.model.Car;
 import com.tsAdmin.model.Demand;
 
@@ -142,7 +143,7 @@ public class DBManager
                     .set("origin_lon", demand.getOrigin().lon)
                     .set("destination_lat",demand.getDestination().lat)
                     .set("destination_lon", demand.getDestination().lon)
-                    .set("type", demand.getProductType().name())
+                    .set("type", demand.getType().name())
                     .set("quantity",demand.getQuantity());
         Db.save("demand", demandRecord);
     }

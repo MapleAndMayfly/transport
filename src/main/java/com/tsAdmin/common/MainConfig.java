@@ -12,9 +12,7 @@ import com.tsAdmin.control.IndexController;
 
 public class MainConfig extends JFinalConfig
 {
-    /**
-     * 配置常量
-     */
+    /** 配置常量 */
     @Override
     public void configConstant(Constants me)
     {
@@ -25,9 +23,7 @@ public class MainConfig extends JFinalConfig
         me.setViewType(ViewType.FREE_MARKER);
     }
 
-    /**
-     * 配置路由
-     */
+    /** 配置路由 */
     @Override
     public void configRoute(Routes me)
     {
@@ -35,9 +31,7 @@ public class MainConfig extends JFinalConfig
         me.add("/data", DataController.class);
     }
 
-    /**
-     * 配置插件
-     */
+    /** 配置插件 */
     @Override
     public void configPlugin(Plugins me)
     {
@@ -50,15 +44,11 @@ public class MainConfig extends JFinalConfig
         me.add(arp);
     }
 
-    /**
-     * 配置全局拦截器
-     */
+    /** 配置全局拦截器 */
     @Override
     public void configInterceptor(Interceptors me) {}
 
-    /**
-     * 配置处理器
-     */
+    /** 配置处理器 */
     @Override
     public void configHandler(Handlers me)
     {

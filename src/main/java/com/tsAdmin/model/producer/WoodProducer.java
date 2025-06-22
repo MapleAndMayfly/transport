@@ -11,6 +11,12 @@ public class WoodProducer extends Producer
     }
 
     @Override
+    protected int getMinDensity() { return 300; }
+
+    @Override
+    protected int getMaxDensity() { return 1200; }
+
+    @Override
     protected int getMinQuantity() { return 10; }
 
     @Override

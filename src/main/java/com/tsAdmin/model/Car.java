@@ -42,9 +42,8 @@ public class Car
     }
 
     private String uuid;                            // 唯一标识符
-    private int maxLoad;                            // 车辆核载
-    // private int maxVolume;                       // 车辆容积
-    private int load;                               // 车辆载重
+    private int maxLoad, maxVolume;                 // 车辆荷载
+    private int load, volume;                       // 车辆载重
     private CarType carType;                        // 车辆类型
     private Coordinate position;                    // 车辆位置
     private Assignment assignment;                  // 车辆订单
@@ -53,20 +52,33 @@ public class Car
     private CarState prevState;                     // 上一车辆状态
     private Timer stateTimer;                       // 状态计时器
 
-    public Car(String uuid, CarType carType, int maxLoad, Coordinate position)
+    public Car(String uuid, CarType carType, int maxLoad, int maxVolume, Coordinate position)
     {
         this.uuid = uuid;
         this.carType = carType;
         this.maxLoad = maxLoad;
+        this.maxVolume = maxVolume;
         this.position = position;
         this.behaviour = new CarBehaviour(this);
         this.stateTimer = new Timer();
     }
 
+    /** 拷贝构造函数 */
+    public Car(Car other)
+    {
+        this.uuid = other.uuid;
+        this.maxLoad = other.maxLoad;
+        this.maxVolume = other.maxVolume;
+        this.load = other.load;
+        this.volume = other.volume;
+        // this.position = new Coordinate(other.position.getX(), other.position.getY());
+    }
+
     // Setter
-    public void setMaxLoad(int authorizedLoad) { this.maxLoad = authorizedLoad; }
+    // public void setMaxLoad(int authorizedLoad) { this.maxLoad = authorizedLoad; }
     // public void setMaxVolume(int volume) { this.maxVolume = volume; }
     public void setLoad(int load) { this.load = load; }
+    public void setVolume(int volume) { this.volume = volume; }
     public void setType(CarType carType) { this.carType = carType; }
     public void setPosition(Coordinate position) { this.position = position; }
     public void setState(CarState newState)
@@ -78,8 +90,9 @@ public class Car
     // Getter
     public String getUUID() { return uuid; }
     public int getMaxLoad() { return maxLoad; }
-    // public int getMaxVolume() { return maxVolume; }
+    public int getMaxVolume() { return maxVolume; }
     public int getLoad() { return load; }
+    public int getVolume() { return volume; }
     public Coordinate getPosition() { return position; }
     public Demand getNextDemand() { return assignment.getNextDemand(); }
     public Demand getLastDemand() { return assignment.getLastDemand(); }

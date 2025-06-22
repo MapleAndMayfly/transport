@@ -109,17 +109,15 @@ public class CarBehaviour
         DBManager.updateCarState(car);
     }
 
-    /**
-     * 状态转换后获取任务时间
-     */
+    /** 状态转换后获取任务时间 */
     public int getBehaviourTime() 
     {
         switch (car.getState()) 
         {
         case ORDER_TAKEN:
-            return 0;//(int)(car.orderTakenLength() / 1000);
+            return 0;   // (int)(car.orderTakenLength() / 1000);
         case TRANSPORTING:
-            return 0;//(int)(car.getDemand().routeLength() / 1000);
+            return 0;   // (int)(car.getDemand().routeLength() / 1000);
         case LOADING:
             return (int)(1.2 * car.getLoad());
         case UNLOADING:
