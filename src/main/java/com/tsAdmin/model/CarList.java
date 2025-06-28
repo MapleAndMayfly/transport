@@ -21,10 +21,12 @@ public class CarList
     private static final Random RANDOM = new Random();
 
     private static final int[] LOADS = { 2000, 3000, 5000, 8000, 10000, 15000, 20000, 25000, 30000 };
+    private static final int[] VOLUMES = { 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000 };
     private static final Coordinate defaultLocation = new Coordinate(30.67646, 104.10248);
     private static int carNum = 10;
 
-    public static int getRandLoad() { return LOADS[RANDOM.nextInt(LOADS.length)]; }
+    public static int getLoad(int randIdx) { return LOADS[randIdx]; }
+    public static int getVolume(int randIdx) { return VOLUMES[randIdx]; }
 
     public static void init()
     {
@@ -38,17 +40,18 @@ public class CarList
                            .set("location_lon", defaultLocation.lon)
                            .set("state", "AVAILABLE")
                            .set("prestate", "AVAILABLE");
+                int idx = RANDOM.nextInt(LOADS.length);
                 if (i <= 0.6*carNum) 
                 {
-                    carRecord.set("type", "COMMON").set("maxload", getRandLoad());
+                    carRecord.set("type", "COMMON").set("maxload", getLoad(idx)).set("maxvolume", getVolume(idx));
                 }
                 else if (i <= 0.8*carNum) 
                 {
-                    carRecord.set("type", "INSULATED_VAN").set("maxload", getRandLoad());
+                    carRecord.set("type", "INSULATED_VAN").set("maxload", getLoad(idx)).set("maxvolume", getVolume(idx));
                 }
                 else 
                 {
-                    carRecord.set("type", "OVERSIZED").set("maxload", 30000);
+                    carRecord.set("type", "OVERSIZED").set("maxload", getLoad(LOADS.length-1)).set("maxvolume", getVolume(VOLUMES.length-1));
                 }
 
                 Db.save("car", carRecord);
@@ -56,7 +59,7 @@ public class CarList
         }
 
         String tableName = "car";
-        String sql = "SELECT UUID, type, maxload, `load`, location_lat, location_lon, state, prestate, `time` FROM " + tableName;
+        String sql = "SELECT UUID, type, maxload, maxvolume, `load`, location_lat, location_lon, state, prestate, `time` FROM " + tableName;
         List<Record> records = Db.find(sql);
         for (Record record : records) 
         {

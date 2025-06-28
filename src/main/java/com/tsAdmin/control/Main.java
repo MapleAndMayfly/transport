@@ -27,7 +27,7 @@ public class Main
     public static void init()
     {
         CarList.init();
-        DemandList.init();
+        //DemandList.init();
         // updater.run();
     }
 }

@@ -36,96 +36,103 @@ public class CarBehaviour
         switch (car.getState())
         {
             case ORDER_TAKEN:
-                if      (randomNumber < 95) nextState = CarState.LOADING;
-                else if (randomNumber < 98) nextState = CarState.ORDER_TAKEN;
+                if      (randomNumber < 96) nextState = CarState.LOADING;
                 else                        nextState = CarState.FREEZE;
                 break;
 
             case LOADING:
-                if      (randomNumber < 95) nextState = CarState.TRANSPORTING;
-                else if (randomNumber < 97) nextState = CarState.LOADING;
+                if      (randomNumber < 97) 
+                {                           nextState=configFromNextNode(); }
                 else if (randomNumber < 99) nextState = CarState.UNLOADING;
                 else                        nextState = CarState.FREEZE;
                 break;
 
             case TRANSPORTING:
-                if      (randomNumber < 98) nextState = CarState.UNLOADING;
-                else if (randomNumber < 99) nextState = CarState.FREEZE;
-                else                        nextState = CarState.AVAILABLE;
+                if      (randomNumber < 99) nextState = CarState.UNLOADING;
+                else                        nextState = CarState.FREEZE;
                 break;
 
             case UNLOADING:
-                if      (randomNumber < 97) nextState = CarState.AVAILABLE;
+                if (randomNumber < 97)      nextState = CarState.AVAILABLE;
                 else                        nextState = CarState.FREEZE;
                 break;
 
             case FREEZE:
                 switch (car.getPrevState())
                 {
-                    case ORDER_TAKEN:
-                        if      (randomNumber < 90) nextState = CarState.LOADING;
-                        else if (randomNumber < 95) nextState = CarState.ORDER_TAKEN;
-                        else                        nextState = CarState.FREEZE;
+                    case ORDER_TAKEN:       nextState = CarState.LOADING;
                         break;
-
                     case LOADING:
-                        if      (randomNumber < 95) nextState = CarState.TRANSPORTING;
-                        else if (randomNumber < 97) nextState = CarState.LOADING;
-                        else if (randomNumber < 99) nextState = CarState.UNLOADING;
-                        else                        nextState = CarState.FREEZE;
+                        if      (randomNumber < 97) 
+                        {                   nextState=configFromNextNode(); }
+                        else                nextState = CarState.UNLOADING;
                         break;
 
-                    case TRANSPORTING:
-                        if      (randomNumber < 98) nextState = CarState.UNLOADING;
-                        else if (randomNumber < 99) nextState = CarState.FREEZE;
-                        else                        nextState = CarState.AVAILABLE;
+                    case TRANSPORTING:      nextState = CarState.UNLOADING;
                         break;
 
-                    case UNLOADING:
-                        if      (randomNumber < 95) nextState = CarState.AVAILABLE;
-                        else if (randomNumber < 98) nextState = CarState.FREEZE;
-                        else                        nextState = CarState.LOADING;
+                    case UNLOADING:         nextState = CarState.AVAILABLE;
                         break;
-
-                    default:
+                    default://正常来讲任何情况都不会进入default
                         break;
                 }
                 break;
 
             case AVAILABLE:
+                nextState = configFromNextNode();
                 break;
-
             default:
                 break;
         }
 
         // 装货后立马卸货的情况下，下一状态必定是装货
-        if (car.getPrevState() == CarState.LOADING && car.getState() == CarState.UNLOADING)
+        if (car.getState() == CarState.UNLOADING && car.getPrevState() == CarState.LOADING)
         {
             nextState = CarState.LOADING;
         }
 
+        if(car.getState()!=CarState.AVAILABLE && nextState == CarState.AVAILABLE)
+        {
+            car.setState(nextState);
+            changeState();
+            return;
+        }
+        car.setstateTimer(getBehaviourTime(nextState));
         car.setState(nextState);
         DBManager.updateCarState(car);
     }
 
     /** 状态转换后获取任务时间 */
-    public int getBehaviourTime() 
+    private int getBehaviourTime(CarState carState) 
     {
-        switch (car.getState()) 
+        switch (carState) 
         {
-        case ORDER_TAKEN:
-            return 0;   // (int)(car.orderTakenLength() / 1000);
-        case TRANSPORTING:
-            return 0;   // (int)(car.getDemand().routeLength() / 1000);
         case LOADING:
-            return (int)(1.2 * car.getLoad());
+            return (int)(1.2 * car.getCurrDemand().getQuantity());
         case UNLOADING:
-            return (int)(0.9 * car.getLoad());
+            return (int)(0.9 * car.getCurrDemand().getQuantity());
         case FREEZE:
             return 30;
         default:
             return 0;
         }
+    }
+
+    private CarState configFromNextNode()
+    {
+        if(!car.getDemandEmpty())
+        {
+            if(car.getFirstNode().isOrigin())
+            { 
+                car.setCurrDemand(car.getFirstNode().getDemand()); 
+                return CarState.ORDER_TAKEN;
+            }
+            else
+            {
+                car.setCurrDemand(car.getFirstNode().getDemand());
+                return CarState.TRANSPORTING;
+            }
+        }
+        return CarState.AVAILABLE;
     }
 }

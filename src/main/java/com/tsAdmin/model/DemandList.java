@@ -34,15 +34,14 @@ public class DemandList
                 int quantity = record.getInt("quantity");
                 int volume = record.getInt("volume");
 
-                Product product = new Product(type)
+                Product product = new Product(type, quantity, volume);
 
                 Demand demand = new Demand(
                     uuid,
                     new Coordinate(origLat, origLon),
                     new Coordinate(destLat, destLon),
-                    type
+                    product
                 );
-                demand.setQuantity(quantity);
 
                 // 添加到 demandList 列表
                 demandList.put(uuid, demand);

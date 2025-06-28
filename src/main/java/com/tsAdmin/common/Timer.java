@@ -8,7 +8,7 @@ public class Timer
     public void setTime(int time) { this.time = time; }
     public int getTime() { return time; }
 
-    public boolean timeUp() { return time == 0; }
+    public boolean timeUp() { return time <= 0; }
 
     public void tick()
     {

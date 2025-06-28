@@ -1,29 +1,22 @@
 package com.tsAdmin.model;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Assignment
 {
-    private List<Demand> demands = new LinkedList<>();
+    private Car car;
+    private List<PathNode> nodeList = new ArrayList<>();
 
-    public void addDemand(Demand demand)
-    {
-        demands.add(demand);
-    }
+    public Assignment(Car car) { this.car = new Car(car); }
 
-    public Demand getNextDemand()
-    {
-        // 返回队首元素并将其移动到队尾
-        Demand ret = demands.removeFirst();
-        demands.addLast(ret);
-        return ret;
-    }
+    public void addPathNode(PathNode pathNode) { nodeList.add(pathNode); }
 
-    public Demand getLastDemand()
+    public Car getCar() { return car; }
+    public List<PathNode> getNodeList() { return nodeList; }
+    public double getCurrentLoad()
     {
-        Demand ret = demands.removeLast();
-        demands.addFirst(ret);
-        return ret;
+        return nodeList.stream().mapToDouble(op -> op.isOrigin() ? op.getDemand().getQuantity() : -op.getDemand().getQuantity())
+                                .sum();
     }
 }
