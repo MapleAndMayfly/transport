@@ -1,58 +1,294 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css"/>
-    <title>Transport Map</title>
-    <style>
-        html,
-        body
-        {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            /* 移除默认边距 */
-            padding: 0;
-            /* 移除默认内边距 */
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>地图仪表盘（带车辆弹窗）</title>
+  <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    html, body { height: 100%; margin: 0; font-family: Arial, sans-serif; overflow: hidden; }
+    .dashboard-container { display: flex; height: 100%; }
+    #container { flex: 3; height: 100%; }
+    .right-panel {
+      flex: 1; min-width: 400px; background: #f5f5f5;
+      padding: 20px; display: flex; flex-direction: column;
+      gap: 20px; box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+    }
+    .chart-container {
+      background: white; padding: 15px;
+      border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      height: 300px; overflow: hidden;
+    }
+    canvas#transportChart {
+      width: 100% !important; height: 100% !important;
+      display: block;
+    }
+    .params-container {
+      background: white; padding: 15px;
+      border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      overflow-y: auto;
+    }
+    .param-table { width: 100%; border-collapse: collapse; }
+    .param-table td {
+      padding: 6px; border-bottom: 1px solid #eee;
+    }
+    .param-table td:first-child { font-weight: bold; color: #666; }
+    .param-table td:last-child { text-align: right; color: #2c3e50; }
+    .vehicle-list { cursor: pointer; transition: background 0.2s; }
+    .vehicle-list:hover { background-color: #eef; }
+    #toggle-chart-type {
+      padding: 6px 12px; font-size: 13px;
+      border: none; background-color: #3498db;
+      color: white; border-radius: 5px; cursor: pointer;
+    }
+    #vehicle-modal {
+      display: none; position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: white; border: 1px solid #ccc;
+      border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 1000; padding: 20px;
+      min-width: 300px; max-width: 400px;
+    }
+    #vehicle-list-wrapper 
+  {
+  height: 30%;
+  min-height: 120px;
+  max-height: 300px;
+  overflow-y: auto;
+  }
 
-        #container
-        {
-            width: 100%;
-            height: 100%;
-        }
-    </style>
+  </style>
 </head>
 <body>
-    <div id="container"></div>
-    <script type="module" src="./map/main.js"></script>
+<div class="dashboard-container">
+  <button id="open-comparison" style="
+    position: fixed;
+    left: 20px;
+    bottom: 20px;
+    z-index: 999;
+    padding: 10px 16px;
+    background-color: #27ae60;
+    color: white;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  ">打开对比图</button>
 
-    <div class="input-card">
-        <h4>点击删除,再次点击生成</h4>
-        <div class="input-item">
-            <input id="clearMarker" type="button" class="btn" onclick="Ifclear()" value="POI点"/>
-        </div>
-        <div class="input-item">
-            <input id="clearMarker" type="button" class="btn" onclick="Viewcar(0)" value="车辆1"/>
-            <input id="clearMarker" type="button" class="btn" onclick="Viewcar(1)" value="车辆2"/>
-        </div>
-        <div class="input-item">
-            <input id="clearMarker" type="button" class="btn" onclick="Viewcar(2)" value="车辆3"/>
-            <input id="clearMarker" type="button" class="btn" onclick="Viewcar(3)" value="车辆4"/>
-        </div>
-        <div class="input-item">
-            <input id="clearMarker" type="button" class="btn" onclick="Viewcar(4)" value="车辆5"/>
-            <input id="clearMarker" type="button" class="btn" onclick="Viewcar(5)" value="车辆6"/>
-        </div>
-        <div class="input-item">
-            <input id="clearMarker" type="button" class="btn" onclick="Viewcar(6)" value="车辆7"/>
-            <input id="clearMarker" type="button" class="btn" onclick="Viewcar(7)" value="车辆8"/>
-        </div>
-        <div class="input-item">
-            <input id="clearMarker" type="button" class="btn" onclick="Viewcar(8)" value="车辆9"/>
-            <input id="clearMarker" type="button" class="btn" onclick="Viewcar(9)" value="车辆10"/>
-            </div>
-        </div>
+  <div id="container"></div>
+  <div class="right-panel">
+    <div class="chart-container">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h3 style="margin: 0;">总代价变化</h3>
+        <button id="toggle-chart-type">切换为折线图</button>
+      </div>
+      <canvas id="transportChart"></canvas>
+    </div>
+    <div class="params-container">
+      <h3>车辆列表</h3>
+      <div id="vehicle-list-wrapper">
+        <table class="param-table" id="vehicle-list">
+          <thead>
+            <tr><th>车辆ID</th><th>状态</th><th>运输次数</th><th>位置</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    
+      <h3>系统指标</h3>
+      <table class="param-table">
+        <tr><td>总运输次数</td><td id="total-transport-count">-</td></tr>
+        <tr><td>总运输重量</td><td id="total-weight-summary">-</td></tr>
+        <tr><td>总空驶里程</td><td id="total-empty-mileage">-</td></tr>
+        <tr><td>平均利用率</td><td id="avg-utilization">-</td></tr>
+      </table>
+    </div>
+    
+  </div>
+</div>
+
+<div id="vehicle-modal">
+  <h3 id="modal-title">车辆详情</h3>
+  <div id="modal-body"></div>
+  <div style="text-align: right; margin-top: 15px;">
+    <button onclick="document.getElementById('vehicle-modal').style.display='none'"
+            style="padding: 6px 12px; background: #3498db; color: white; border: none; border-radius: 4px;">
+      关闭
+    </button>
+  </div>
+</div>
+
+<script type="text/javascript">
+  window._AMapSecurityConfig = {
+    securityJsCode:"9858defc87670662758db011c95df7ac"
+  };
+</script>
+<script type="module" src="./map/main.js"></script>
+<script type="module">
+  const updateInterval = 5000;
+  const DEFAULT_METRICS = {
+    totalDistance: 0, waitingTime: 0, emptyDistance: 0,
+    totalTime: 0, transportingTime: 0, idleRatio: 0,
+    totalWeight: 0, wastedWeight: 0, utilization: 0, tripCount: 0
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { position: 'top' } },
+    scales: {
+      y: { beginAtZero: true, title: { display: true, text: 'cost' } },
+      x: { title: { display: true, text: '周期' } }
+    }
+  };
+
+  let currentChartType = 'bar';
+  const ctx = document.getElementById('transportChart');
+  let chart = new Chart(ctx, {
+    type: currentChartType,
+    data: {
+      labels: [],
+      datasets: [{
+        label: '车辆每周期代价变化',
+        data: [],
+        backgroundColor: 'rgba(52, 152, 219, 0.6)',
+        borderColor: '#2980b9',
+        borderWidth: 1,
+        borderRadius: 4,
+        barThickness: 20,
+        tension: 0.3,
+        fill: true
+      }]
+    },
+    options: chartOptions
+  });
+
+  document.getElementById('toggle-chart-type').addEventListener('click', () => {
+    currentChartType = currentChartType === 'bar' ? 'line' : 'bar';
+    document.getElementById('toggle-chart-type').textContent =
+      currentChartType === 'bar' ? '切换为折线图' : '切换为柱状图';
+
+    const labels = chart.data.labels;
+    const data = chart.data.datasets[0].data;
+
+    chart.destroy();
+    chart = new Chart(ctx, {
+      type: currentChartType,
+      data: {
+        labels: labels,
+        datasets: [{
+          label: '车辆每周期代价变化',
+          data: data,
+          backgroundColor: 'rgba(52, 152, 219, 0.6)',
+          borderColor: '#2980b9',
+          borderWidth: 1,
+          borderRadius: 4,
+          barThickness: 20,
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: chartOptions
+    });
+  });
+
+  let vehicles = [];
+
+  async function fetchDashboardData() {
+    try {
+      let url = new URL('/data/getDashboardData', window.location.origin);
+      const res = await fetch(url);
+      const { costHistory, carMetrics, labels } = await res.json();
+
+
+      if (Array.isArray(costHistory) && Array.isArray(labels)) {
+  chart.data.labels = labels;
+  chart.data.datasets[0].data = costHistory;
+  chart.update();
+}
+
+
+
+      vehicles = carMetrics.map(c => ({
+        UUID: c.UUID,
+        status: c.status ?? (Math.random() > 0.5 ? 1 : 0),
+        lat: c.lat ?? (30.6 + Math.random() * 0.1),
+        lon: c.lon ?? (104.0 + Math.random() * 0.1),
+        metrics: { ...DEFAULT_METRICS, ...c }
+      }));
+
+      updateVehicleList(vehicles);
+      updateSystemMetrics(vehicles);
+
+    } catch (err) {
+      console.error('获取仪表盘数据失败:', err);
+    }
+  }
+
+  function updateVehicleList(vehicleList) {
+    const tbody = document.querySelector('#vehicle-list tbody');
+    tbody.innerHTML = vehicleList.map(v => `
+      <tr class="vehicle-list" data-uuid="${v.UUID}">
+        <td>${v.UUID}</td>
+        <td>${v.status === "TRANSPORTING" ? '运货行驶' : (v.status==="AVAILABLE"?'空闲':(v.status==="UNLOADING"?'卸货':
+        (v.status==="FREEZE"?'停车等待':(v.status==="LOADING"?'装货':'接单行驶'))))}</td>
+        <td>${v.metrics.tripCount}</td>
+        <td>${v.lat.toFixed(5)}, ${v.lon.toFixed(5)}</td>
+      </tr>
+    `).join('');
+
+    document.querySelectorAll('.vehicle-list').forEach(row => {
+      row.addEventListener('click', () => {
+        const uuid = row.dataset.uuid;
+        const v = vehicles.find(v => v.UUID === uuid);
+        if (!v) return;
+
+        const m = v.metrics;
+        console.log("空驶里程"+m.emptyDistance+"空闲比"+m.idleRatio);
+        const html = `
+          <p><strong>UUID:</strong>${v.UUID}</p>
+          <p><strong>运输次数：</strong>${m.tripCount}</p>
+          <p><strong>总重量：</strong>${m.totalWeight.toFixed(1)} KG</p>
+          <p><strong>空驶里程：</strong>${m.emptyDistance.toFixed(2)} km</p>
+          <p><strong>运输时间：</strong>${m.transportingTime} ms</p>
+          <p><strong>总时间：</strong>${m.totalTime} ms</p>
+          <p><strong>利用率：</strong>${m.utilization.toFixed(1)}%</p>
+          <p><strong>空闲比：</strong>${m.idleRatio.toFixed(2)}%</p>
+          <p><strong>浪费载重：</strong>${m.wastedWeight.toFixed(1)} KG</p>
+        `;
+
+        document.getElementById('modal-title').textContent = `车辆 ${v.UUID} 指标`;
+        document.getElementById('modal-body').innerHTML = html;
+        document.getElementById('vehicle-modal').style.display = 'block';
+      });
+    });
+  }
+
+  function updateSystemMetrics(vehicleList) {
+    const total = vehicleList.reduce((acc, v) => {
+      const m = v.metrics;
+      acc.trip += m.tripCount;
+      acc.weight += m.totalWeight;
+      acc.empty += m.emptyDistance;
+      acc.util += m.utilization;
+      acc.count += 0?m.utilization===0:1;
+      return acc;
+    }, { trip: 0, weight: 0, empty: 0, util: 0, count: 0 });
+
+    document.getElementById('total-transport-count').textContent = total.trip;
+    document.getElementById('total-weight-summary').textContent = `${total.weight.toFixed(1)} KG`;
+    document.getElementById('total-empty-mileage').textContent = `${total.empty.toFixed(2)} km`;
+    document.getElementById('avg-utilization').textContent = `${(total.util / total.count || 0).toFixed(1)}%`;
+  }
+
+  fetchDashboardData();
+  setInterval(fetchDashboardData, updateInterval);
+
+  document.getElementById('open-comparison').addEventListener('click', () => {
+    window.open('comparison.html', '_blank');
+  });
+</script>
 </body>
 </html>

@@ -4,11 +4,13 @@ import com.tsAdmin.model.DemandList;
 
 public class DataUpdater implements Runnable
 {
+    Scheduler scheduler = new SimulatedAnnealingScheduler();
+
     @Override
     public void run()
     {
         final double UPDATE_INTERVAL = 5e3;             // 每5s一个周期
-        final int GENERATE_NUMBER = 2;                  // 每周期生成2个
+        final int GENERATE_NUMBER = 50;                  // 每周期生成2个
 
         boolean isRunning = true;                       // 线程运行旗标
         long lastUpdate = System.currentTimeMillis();
@@ -23,7 +25,8 @@ public class DataUpdater implements Runnable
                 lastUpdate = currentTime;
 
                 // 每周期调用以下内容
-                DemandList.generateDemand(GENERATE_NUMBER);
+                //DemandList.generateDemand(GENERATE_NUMBER);
+                scheduler.schedule();
             }
         }
     }

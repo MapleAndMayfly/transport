@@ -18,6 +18,12 @@ public class Coordinate
         return new double[] { lat, lon };
     }
 
+    public void set(Coordinate p)
+    {
+        this.lat = p.lat;
+        this.lon = p.lon;
+    }
+
     /**
      * 计算两坐标直线距离
      * @param c1 第一个坐标

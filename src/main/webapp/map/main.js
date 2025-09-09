@@ -19,19 +19,18 @@ script.onload = () => main();
 script.onerror = () => console.error('高德地图 API 加载失败');
 document.head.appendChild(script);
 
-const updateInterval = 5000;    // 5000ms
+const updateInterval = 5000;    // 更新间隔5000ms
+const duration = 20; // 每段停留时间（单位：毫秒）
+// const routes = [];
+const POIs = [];//poi点数组
+const cars = [];//车辆数组
 
-const routes = [];
-const POIs = [];
-const cars = [];
-
-let isStatusModifying = false;
-let isRouteUpdating = false;
 let isCarUpdating = false;
 
-let map;
-let driving;
+let map;//map对象
+let driving;//driving对象
 let carIcon;
+
 
 async function main()
 {
@@ -58,7 +57,7 @@ async function main()
 
     try
     {
-        setInterval(() => update(), updateInterval);
+        setInterval(() => update(), updateInterval);//总更新函数
     }
     catch (error)
     {
@@ -66,17 +65,9 @@ async function main()
     }
 }
 
-/*----------------------------------------------------------------
- * 初始化
- * 
- * 
- * 
- * 
- * 
- * 
- */
 
-async function initPOI()
+
+async function initPOI()//生成poi点
 {
     // 遍历 POIIconSrc 对象的所有键值对
     for (const [type, iconSrc] of Object.entries(POIIconSrc))
@@ -106,7 +97,7 @@ async function initPOI()
     }
 }
 
-async function initCar()
+async function initCar()//生成车辆
 {
     let data = await getCarData();
 
@@ -118,9 +109,9 @@ async function initCar()
     driving = new AMap.Driving(drivingOption);
 
     carIcon = new AMap.Icon({
-        size: new AMap.Size(32, 32),
+        size: new AMap.Size(16, 16),
         image: carIconSrc,
-        imageSize: new AMap.Size(32, 32)
+        imageSize: new AMap.Size(16, 16)
     });
 
     data.forEach(car => {
@@ -132,7 +123,14 @@ async function initCar()
 
         cars.push({
             UUID: car.UUID,
-            marker: marker
+            marker: marker,
+            status:0,
+            info:{
+                startMarker:marker,
+                endMarker:marker,
+                route:null,
+                Time:0
+            }
         });
     });
     console.log(`车辆添加成功, 数量: ${data.length}`);
@@ -143,7 +141,7 @@ async function initCar()
  * @param {string} type
  * @returns 包含UUID, name, lat, lon属性的类
  */
-async function getPOIData(type)
+async function getPOIData(type)//后端poi点获取
 {
     try
     {
@@ -176,7 +174,7 @@ async function getPOIData(type)
  * 获取车辆的数据信息
  * @returns 包含UUID, lat, lon属性的类
  */
-async function getCarData()
+async function getCarData()//后端车辆坐标获取
 {
     try
     {
@@ -203,163 +201,189 @@ async function getCarData()
     }
 }
 
-/**----------------------------------------------------------------
- * 更新数据与页面
- * 
- * 
- * 
- * 
- * 
- * 
- */
 async function update()
 {
-    await updateCars();
-    await updateRoutes();
+    await updateCars();//车辆位置更新
 }
-
 /**
  * 车辆位置及状态更新
  */
-async function updateCars()
-{
+async function updateCars() {
+    console.log("调用 updateCars");
+
     if (isCarUpdating) return;
     isCarUpdating = true;
 
-    try
-    {
-        // TODO
-    }
-    catch (error)
-    {
-        console.error('车辆更新时出错: ', error);
-    }
-    finally
-    {
+    try {
+        for (const car of cars) 
+        {
+            const uuid = car.UUID;
+            if (car.status === 0) 
+            {
+                const recivdata = await sendPara(uuid);
+                console.log(`车辆 ${uuid} 收到目的地:`, recivdata);
+
+                // 校验目的地格式和合法性
+                if (
+                    !recivdata 
+                ) {
+                    console.warn(`车辆 ${uuid} 目标坐标无效，跳过：`, recivdata);
+                    continue;
+                }
+
+                const end = [recivdata.lng, recivdata.lat];
+
+                // 获取当前位置
+                const currentLngLat = car.marker.getPosition();
+                const start = [currentLngLat.lng, currentLngLat.lat];
+
+                // setPosition 调用
+                 //car.marker.setPosition(end);
+
+                try 
+                {
+                    // 执行路径规划
+                    const route = await planRoute(start, end);
+
+                    // 检查路径是否有效
+                    if (!route || !route.steps || route.steps.length === 0 || typeof route.distance !== 'number') 
+                    {
+                        console.error(`车辆 ${uuid} 路径无效，跳过`);
+                        continue;
+                    }
+                    car.status = 1;
+                    const routeInfo = await drawRoute(route);
+                    car.info = routeInfo;
+                    cartransporting(routeInfo, uuid);
+                    VideoCars(car.marker,route);
+
+                } catch (err) {
+                    console.error(`车辆 ${uuid} 路径规划失败:`, err);
+                }
+
+            } else if (car.status === 1) 
+            {
+                cartransporting(car.info, uuid);
+            }
+        }
+
+    } catch (error) {
+        console.error("车辆更新总过程出错：", error);
+    } finally {
         isCarUpdating = false;
     }
 }
 
-/*----------------------------------------------------------------
- * 下面的没看完
- * 
- * 
- * 
- * 
- * 
- */
-async function updateRoutes()
+async function VideoCars(marker, route)
 {
-    if (isRouteUpdating) return;
-    
-    isRouteUpdating = true;
-    try
-    {
-        routes = routes.filter(routeInfo => {
-            routeInfo.Tnum--;
+    const path = parseRouteToPath(route);
 
-            if (routeInfo.Tnum <= 0)
+    for (let i = 0; i < path.length; i++)
+    {
+        const point = path[i];
+        const lng = typeof point.getLng === 'function' ? point.getLng() : point.lng;
+        const lat = typeof point.getLat === 'function' ? point.getLat() : point.lat;
+
+        marker.setPosition([lng, lat]);
+
+        await new Promise(resolve => setTimeout(resolve, duration));
+    }
+
+    console.log("路径跳点完成");
+}
+
+async function sendPara(uuid) 
+{
+    console.log("已调用sendPara");
+    try {
+        // 构造包含 UUID 
+        let url = new URL('/data/getDestination', window.location.origin);
+        url.searchParams.append("UUID", uuid);
+        const response = await fetch(url);
+        let data = await response.json();
+        console.log("后端响应:",data);
+        return data;
+    } catch (error) {
+        console.error('发送 UUID 到后端时出错:', error);
+    }
+}
+//根据起终点规划路径
+function planRoute(start, end) 
+{
+    return new Promise((resolve, reject) => 
+    { 
+    driving.search(new AMap.LngLat(start[0], start[1]), new AMap.LngLat(end[0], end[1]), 
+        function (status, result)
+        {
+            if (status === 'complete' && result.routes && result.routes.length) 
             {
-                removeRoute(routeInfo.route1, routeInfo.car, routeInfo.demandStart1);
-                removeRoute(routeInfo.route2, routeInfo.demandStart2, routeInfo.demandEnd);
-                return false;
-            }
-            return true;
-        });
-    }
-    catch (error)
-    {
-        console.error('路线更新错误: ', error);
-    }
-    finally
-    {
-        isRouteUpdating = false;
-    }
-}
-
-function removeRoute(route, startMarker, endMarker)
-{
-    route.setMap(null);
-    startMarker.setMap(null);
-    endMarker.setMap(null);
-}
-
-function planRoute(start, end)
-{
-    return new Promise((resolve, reject) => driving.search(
-            new AMap.LngLat(start[0], start[1]),
-            new AMap.LngLat(end[0], end[1]),
-            function (status, result)
+                var route= result.routes[0];
+                resolve(route);
+            } 
+            else 
             {
-                if (status === 'complete' && result.routes && result.routes.length)
-                {
-                    resolve(result.routes[0]);
-                }
-                else
-                {
-                    reject(new Error('请求失败，状态: ' + status));
-                }
+                console.error('请求失败，状态:', status+'结果'+result);
+                reject(new Error('请求失败，状态: ' + status +'结果'+result));
             }
-        )
-    );
-}
-
-function storeRouteInfo(route1, route2, car, demandStart1, demandStart2,
-                        demandEnd, Tnum, index)
-{
-    routes.push({
-        route1: route1,
-        route2: route2,
-        car: car,
-        demandStart1: demandStart1,
-        demandStart2: demandStart2,
-        demandEnd: demandEnd,
-        Tnum: Tnum,
-        index: index
+        }
+     );
     });
 }
 
-// 绘制路线函数，基本沿用原代码逻辑
-function drawRoute(route)
+// 绘制路线函数
+function drawRoute(Route)
 {
-    let path = parseRouteToPath(route);
+    let path = parseRouteToPath(Route);
 
+    let originIcon = new AMap.Icon({
+        size: new AMap.Size(16,16),
+        image: originIconSrc,
+        imageSize: new AMap.Size(16,16)
+    });
     let startMarker = new AMap.Marker({
         position: path[0],
-        icon: originIconSrc,
+        icon: originIcon,
         map: map
+    });//起点图标
+
+    let destinationIcon = new AMap.Icon({
+        size: new AMap.Size(16,16),
+        image: destinationIconSrc,
+        imageSize: new AMap.Size(16,16)
     });
 
     let endMarker = new AMap.Marker({
         position: path[path.length - 1],
-        icon: destinationIconSrc,
+        icon: destinationIcon,
         map: map
-    });
+    });//终点图标
 
-    route = new AMap.Polyline({
+    Route = new AMap.Polyline({
         path: path,
         isOutline: true,
         outlineColor: '#ffeeee',
         borderWeight: 2,
-        strokeWeight: 5,
+        strokeWeight: 3,
         strokeOpacity: 0.9,
         strokeColor: '#0091ff',
         lineJoin: 'round'
-    });
+    });//路线的各种参数，不用管他
 
-    map.add(route);
-
-    // 调整视野达到最佳显示区域
-    // map.setFitView([startMarker, endMarker, route]);
-    let LineInfo = {
+    map.add(Route);
+    console.log("路线已规划"+path.length);
+//车辆运行
+   const time=path.length*duration;
+    let routeInfo = {
         startMarker:startMarker,
         endMarker:endMarker,
-        route:route
+        route:Route,
+        Time:time
     };
-    return LineInfo;
+    console.log("路径信息："+routeInfo);
+    return routeInfo;
 }
 
-// 解析DrivingRoute对象获取路径数组，基本沿用原代码逻辑
+// 获取路径数组
 function parseRouteToPath(route)
 {
     let path = [];
@@ -373,3 +397,31 @@ function parseRouteToPath(route)
     }
     return path;
 }
+
+//用于转换车辆状态，倒计时结束则回到空闲状态
+async function cartransporting(routeInfo,carUUID)
+{
+     // 设置车辆运输完成的倒计时
+     if(routeInfo.Time>0)
+    {
+        routeInfo.Time-=5000;
+        console.log("车辆"+carUUID+"已减少倒计时");
+     }
+     else {
+        const carIndex = cars.findIndex(car => car.UUID === carUUID);
+        if (carIndex !== -1) 
+        {
+            // 恢复车辆空闲状态
+            cars[carIndex].status = 0;
+            // 清理路线相关元素
+            map.remove(routeInfo.startMarker);
+            map.remove(routeInfo.endMarker);
+            map.remove(routeInfo.route);
+           const nousedc=await sendPara(carUUID);
+            console.log(`车辆 ${carUUID} 已完成运输`);
+        }
+          }
+}
+
+
+

@@ -1,7 +1,6 @@
 package com.tsAdmin.control;
 
 import com.jfinal.core.JFinal;
-
 import com.tsAdmin.model.CarList;
 import com.tsAdmin.model.DemandList;
 
@@ -27,7 +26,10 @@ public class Main
     public static void init()
     {
         CarList.init();
-        //DemandList.init();
-        // updater.run();
+        DemandList.init();
+        // 将DataUpdater作为独立线程运行，避免阻塞主线程
+        Thread updaterThread = new Thread(updater);
+        updaterThread.setDaemon(true); // 设置为守护线程，主程序结束时自动结束
+        updaterThread.start();
     }
 }

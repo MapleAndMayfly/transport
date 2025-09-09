@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>运行指标比值对比</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .chart-container {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 40px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: opacity 0.3s ease;
+    }
+    .chart-container h3 {
+      margin-bottom: 10px;
+    }
+    canvas {
+      width: 100% !important;
+      height: 400px !important;
+    }
+  </style>
+</head>
+<body>
+  <h2>指标比值对比</h2>
+  <div id="charts-root"></div>
+
+  <script>
+    // 全局变量
+    let lastScrollPosition = 0;
+    let isUpdating = false;
+    const updateInterval = 5000;
+    let chartInstances = []; // 存储所有图表实例
+
+    // 颜色生成函数
+    function getColor(index) {
+      const palette = [
+        "#e74c3c", "#3498db", "#2ecc71",
+        "#f1c40f", "#9b59b6", "#1abc9c",
+        "#e67e22", "#34495e"
+      ];
+      return palette[index % palette.length];
+    }
+
+    // 防抖函数
+    function debounce(func, wait) {
+      let timeout;
+      return function() {
+        const context = this, args = arguments;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          func.apply(context, args);
+        }, wait);
+      };
+    }
+
+    // 更新图表数据
+    function updateChart(chart, labels, datasets) {
+      chart.data.labels = labels;
+      chart.data.datasets.forEach((dataset, i) => {
+        if (datasets[i]) {
+          dataset.label = datasets[i].label;
+          dataset.data = datasets[i].data;
+          dataset.borderColor = datasets[i].borderColor;
+          dataset.backgroundColor = datasets[i].backgroundColor;
+        }
+      });
+      chart.update();
+    }
+
+    // 主加载函数
+    const loadComparisonData = debounce(async function() {
+      if (isUpdating) return;
+      
+      try {
+        isUpdating = true;
+        lastScrollPosition = window.scrollY || document.documentElement.scrollTop;
+        
+        // 显示加载状态
+        const loadingIndicator = document.getElementById('loading-indicator') || 
+          (() => {
+            const el = document.createElement('div');
+            el.id = 'loading-indicator';
+            el.style.position = 'fixed';
+            el.style.top = '20px';
+            el.style.right = '20px';
+            el.style.padding = '10px';
+            el.style.background = 'rgba(0,0,0,0.7)';
+            el.style.color = 'white';
+            el.style.borderRadius = '4px';
+            el.style.zIndex = '1000';
+            document.body.appendChild(el);
+            return el;
+          })();
+        loadingIndicator.textContent = '数据更新中...';
+        
+        // 临时降低图表可见度
+        const chartsRoot = document.getElementById("charts-root");
+        Array.from(chartsRoot.children).forEach(container => {
+          container.style.opacity = '0.5';
+        });
+        
+        const res = await fetch(new URL('/data/getComparisonData', window.location.origin));
+        const result = await res.json();
+        const metrics = result.metrics || [];
+        
+        // 确保图表容器存在足够数量的子元素
+        while (chartsRoot.children.length < metrics.length) {
+          const container = document.createElement("div");
+          container.className = "chart-container";
+          container.innerHTML = `<h3></h3><canvas></canvas>`;
+          chartsRoot.appendChild(container);
+        }
+        
+        // 移除多余的图表容器
+        while (chartsRoot.children.length > metrics.length) {
+          const lastChild = chartsRoot.lastChild;
+          const canvas = lastChild.querySelector('canvas');
+          if (canvas && canvas.chart) {
+            canvas.chart.destroy();
+          }
+          chartsRoot.removeChild(lastChild);
+        }
+        
+        // 更新每个图表
+        chartInstances = [];
+        for (let i = 0; i < metrics.length; i++) {
+          const metric = metrics[i];
+          const container = chartsRoot.children[i];
+          const title = container.querySelector("h3");
+          const canvas = container.querySelector("canvas");
+          
+          // 恢复可见度
+          container.style.opacity = '1';
+          
+          // 更新标题
+          title.textContent = metric.name;
+          
+          // 准备数据
+          const fullLength = metric.series[0].values.length;
+          const displayCount = 10;
+          const startIndex = Math.max(0, fullLength - displayCount);
+          const startPeriodFromServer = result.startPeriod || 1;
+          
+          const labels = metric.series[0].values
+            .slice(startIndex)
+            .map((_, i) => `周期${startPeriodFromServer + startIndex + i}`);
+          
+          const datasets = metric.series.map((s, i) => ({
+            label: s.vehicle,
+            data: s.values.slice(startIndex),
+            borderColor: getColor(i),
+            backgroundColor: getColor(i),
+            fill: false,
+            tension: 0.3
+          }));
+          
+          // 检查是否已有图表实例
+          if (canvas.chart) {
+            updateChart(canvas.chart, labels, datasets);
+          } else {
+            // 创建新图表
+            const chart = new Chart(canvas, {
+              type: "line",
+              data: { labels, datasets },
+              options: {
+                responsive: true,
+                plugins: { legend: { position: "top" } },
+                scales: {
+                  y: {
+                    title: { display: true, text: "比值" },
+                    beginAtZero: false,
+                    suggestedMin: 0,
+                    suggestedMax: 1.5
+                  },
+                  x: {
+                    title: { display: true, text: "运行周期" }
+                  }
+                }
+              }
+            });
+            // 将图表实例附加到canvas元素上
+            canvas.chart = chart;
+          }
+          chartInstances.push(canvas.chart);
+        }
+      } catch (err) {
+        console.error("加载数据失败:", err);
+        const errorEl = document.getElementById('error-message') || 
+          (() => {
+            const el = document.createElement('div');
+            el.id = 'error-message';
+            el.style.position = 'fixed';
+            el.style.top = '20px';
+            el.style.left = '50%';
+            el.style.transform = 'translateX(-50%)';
+            el.style.padding = '10px';
+            el.style.background = 'rgba(255,0,0,0.7)';
+            el.style.color = 'white';
+            el.style.borderRadius = '4px';
+            el.style.zIndex = '1000';
+            document.body.appendChild(el);
+            return el;
+          })();
+        errorEl.textContent = '数据加载失败，请稍后重试';
+        setTimeout(() => errorEl.remove(), 3000);
+      } finally {
+        isUpdating = false;
+        window.scrollTo({ top: lastScrollPosition, behavior: 'smooth' });
+        const loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) loadingIndicator.remove();
+      }
+    }, 300);
+
+    // 初始加载 & 定时刷新
+    loadComparisonData();
+    setInterval(loadComparisonData, updateInterval);
+
+    // 窗口大小变化时重新绘制图表
+    window.addEventListener('resize', debounce(() => {
+      chartInstances.forEach(chart => {
+        chart.resize();
+      });
+    }, 200));
+  </script>
+</body>
+</html>

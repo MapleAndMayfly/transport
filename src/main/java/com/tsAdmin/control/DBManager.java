@@ -119,8 +119,8 @@ public class DBManager
 
     public static void updateCarState(Car car)
     {
-        String sql = "UPDATE car SET currState = ?, prevState = ? WHERE UUID = ?";
-        Db.update(sql, car.getState(), car.getPrevState(), car.getUUID());
+        String sql = "UPDATE car SET state = ?, prestate = ? WHERE UUID = ?";
+        Db.update(sql, car.getState().toString(), car.getPrevState().toString(), car.getUUID().toString());
     }
 
     public static void updateCarTime(Car car)
@@ -131,7 +131,7 @@ public class DBManager
 
     public static List<Record> getDemands()
     {
-        String sql = "SELECT UUID, origin_lat, origin_lon, destination_lat, destination_lon, type, quantity FROM demand";
+        String sql = "SELECT UUID, origin_lat, origin_lon, destination_lat, destination_lon, type, quantity, volume FROM demand";
         return Db.find(sql);
     }
 
@@ -144,7 +144,8 @@ public class DBManager
                     .set("destination_lat",demand.getDestination().lat)
                     .set("destination_lon", demand.getDestination().lon)
                     .set("type", demand.getType().name())
-                    .set("quantity",demand.getQuantity());
+                    .set("quantity",demand.getQuantity())
+                    .set("volume", demand.getVolume());
         Db.save("demand", demandRecord);
     }
 

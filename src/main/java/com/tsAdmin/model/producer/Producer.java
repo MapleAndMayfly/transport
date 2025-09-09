@@ -28,7 +28,7 @@ public abstract class Producer extends Manufacturer
     public Demand createDemand(ProductType type, Processor processor)
     {
         // 质量按吨生成，按千克存储和计算
-        int quantity = getRandQuantity() * 1000;
+        int quantity = getRandQuantity() * 200;
         Product product = new Product(type, quantity, getRandVolume(quantity));
         String uuid = UUID.randomUUID().toString().replace("-", "");
 

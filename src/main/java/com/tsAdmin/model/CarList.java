@@ -23,13 +23,14 @@ public class CarList
     private static final int[] LOADS = { 2000, 3000, 5000, 8000, 10000, 15000, 20000, 25000, 30000 };
     private static final int[] VOLUMES = { 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000 };
     private static final Coordinate defaultLocation = new Coordinate(30.67646, 104.10248);
-    private static int carNum = 10;
+    private static int carNum = 100;
 
     public static int getLoad(int randIdx) { return LOADS[randIdx]; }
     public static int getVolume(int randIdx) { return VOLUMES[randIdx]; }
 
     public static void init()
     {
+        int x=1;
         if (DBManager.isTableEmpty("car"))
         {
             for (int i = 0; i < carNum; i++)
@@ -80,8 +81,51 @@ public class CarList
             car.setState(prevState);
             car.setState(currState);
             car.getStateTimer().setTime(time);
+            car.setRemainingLoad(maxLoad);
+            car.setRemainingVolume(maxVolume);
+            car.setPosition(getNaturalRandomLocation(x));x++;
+            DBManager.updateCarPos(car);
 
             carList.put(uuid, car);
         }
+    }
+
+    @SuppressWarnings("unused")
+    private static final Coordinate getCircularLocation(int i) 
+    {
+    double baseLat = 30.67646;
+    double baseLng = 104.10248;
+    double radius = 1; // 分布半径
+    
+    double angle = 2 * Math.PI * i / 100;
+    return new Coordinate(
+        baseLat + radius * Math.sin(angle),
+        baseLng + radius * Math.cos(angle)
+    );   
+    }
+
+    private static final Coordinate getNaturalRandomLocation(int i) 
+    {
+        double baseLat = 30.67646;
+        double baseLng = 104.10248;
+        double maxRadius = 0.12; // 最大半径约2公里
+        
+        // 使用种子确保每次运行分布一致（可选）
+        Random random = new Random(i * 12345L);
+        
+        // 随机角度
+        double angle = random.nextDouble() * 2 * Math.PI;
+        
+        // 随机距离（使用平方根使分布更均匀）
+        double distance = Math.sqrt(random.nextDouble()) * maxRadius;
+        
+        // 计算偏移量（经度需要根据纬度调整）
+        double latOffset = distance * Math.sin(angle);
+        double lngOffset = distance * Math.cos(angle) / Math.cos(Math.toRadians(baseLat));
+        
+        return new Coordinate(
+            baseLat + latOffset,
+            baseLng + lngOffset
+        );
     }
 }

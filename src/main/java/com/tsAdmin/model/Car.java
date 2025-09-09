@@ -56,12 +56,14 @@ public class Car
     private CarState prevState;                         // 上一车辆状态
     private Timer stateTimer;                           // 状态计时器
     private Demand currDemand;                          // 目前订单缓存
+    private CarStat carStat;                            // 车辆统计参数
 
     public Car(Car c)
     {
         this(c.uuid, c.carType, c.maxLoad, c.maxVolume, c.position);
         this.remainingLoad = c.remainingLoad;
         this.remainingVolume = c.remainingVolume;
+        this.carStat = new CarStat();
     }
     public Car(String uuid, CarType carType, int maxLoad, int maxVolume, Coordinate position)
     {
@@ -72,6 +74,7 @@ public class Car
         this.position = position;
         this.behaviour = new CarBehaviour(this);
         this.stateTimer = new Timer();
+        this.carStat = new CarStat();
     }
 
     // Setter
@@ -97,19 +100,26 @@ public class Car
     public int getMaxLoad() { return maxLoad; }
     public int getMaxVolume() { return maxVolume; }
     public int getLoad() { return load; }
-    public double getRemainingLoad() { return remainingLoad; }
     public int getVolume() { return volume; }
+    public double getRemainingLoad() { return remainingLoad; }
     public double getRemainingVolume() { return remainingVolume; }
     public Coordinate getPosition() { return position; }
-    public Demand getCurrDemand() { return currDemand; }
+    public List<PathNode> getNodeList() { return nodeList; }
     public PathNode getFirstNode() { return nodeList.getFirst(); }
-    public boolean getDemandEmpty() { return nodeList.isEmpty(); }
+    public Demand getCurrDemand() { return currDemand; }
+    public boolean isDemandEmpty() { return nodeList.isEmpty(); }
     public CarState getState() { return currState; }
     public CarState getPrevState() { return prevState; }
     public Timer getStateTimer() { return stateTimer; }
+    public CarStat getCarStat() { return carStat; }
 
     public boolean isType(CarType carType) { return this.carType == carType; }
-    public void tick() { behaviour.tick(); }
+    public void tick() { 
+        stateTimer.tick(); 
+        // 每次仿真推进，累计车辆总时间（单位：秒，步长为30）
+        carStat.setExistTime(carStat.getExistTime() + 30);
+    }
     public void changeState(){ behaviour.changeState(); }
+    public void addPathNode(PathNode node) { nodeList.add(node); }
     public void deleteFirstNode() { nodeList.removeFirst(); }
 }
