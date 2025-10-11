@@ -27,12 +27,7 @@ public class ProducerFactory
 
             return factory(type, uuid, name, new Coordinate(lat, lon));
         }
-        else
-        {
-            // TODO: No processor
-            System.out.println("数据库中没找到生产厂");
-            return null;
-        }
+        else throw new RuntimeException("数据库中没找到生产厂");
     }
 
     private static Producer factory(ProductType type, String uuid, String name, Coordinate coordinate) 

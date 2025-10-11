@@ -135,6 +135,16 @@ public class DBManager
         return Db.find(sql);
     }
 
+    public static List<Record> getCars()
+    {
+        String sql = "SELECT UUID, type, maxload, maxvolume, location_lat, location_lon FROM car";
+        return Db.find(sql);
+    }
+
+    /**
+     * 保存订单到数据库
+     * @param demand 要保存的订单
+     */
     public static void saveDemand(Demand demand)
     {
         Record demandRecord = new Record();
@@ -149,20 +159,45 @@ public class DBManager
         Db.save("demand", demandRecord);
     }
 
-    /** 更新刚被接单的需求所剩质量*/
+    /**
+     * 保存车辆到数据库 <i>仅在初始化无车辆时调用</i>
+     * @param car 要保存的车辆
+     */
+    public static void saveCar(Car car)
+    {
+        Record carRecord = new Record();
+        carRecord.set("UUID", car.getUUID())
+                 .set("type", car.getType().toString())
+                 .set("maxLoad", car.getMaxLoad())
+                 .set("maxVolume", car.getMaxVolume())
+                 .set("location_lat", car.getPosition().lat)
+                 .set("location_lon", car.getPosition().lon);
+        Db.save("car", carRecord);
+    }
+
+    /**
+     * 在数据库中更新订单剩余质量
+     * @param demand 更新的订单
+     */
+    @Deprecated
     public static void updateDemandQuantity(Demand demand)
     {
         String sql = "UPDATE demand SET quantity = ? WHERE UUID = ?";
         Db.update(sql, demand.getQuantity(), demand.getUUID());
     }
 
-    /** 删除数据库中的需求*/
-    public static boolean deleteDemand(String UUID)
+    /**
+     * 从数据库删除订单
+     * @param demand 要删除订单
+     * @return 删除 成功 (true) | 失败 (false)
+     */
+    @Deprecated
+    public static boolean deleteDemand(Demand demand)
     {
         try
         {
             String sql = "DELETE FROM demand WHERE UUID = ?";
-            Db.update(sql, UUID);
+            Db.update(sql, demand.getUUID());
             return true;
         }
         catch (Exception e)

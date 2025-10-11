@@ -1,14 +1,14 @@
-package com.tsAdmin.control;
-
-import com.tsAdmin.model.Assignment;
-import com.tsAdmin.model.Car;
-import com.tsAdmin.model.CarList;
-import com.tsAdmin.model.PathNode;
+package com.tsAdmin.control.scheduler;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
+
+import com.tsAdmin.common.PathNode;
+import com.tsAdmin.model.Assignment;
+import com.tsAdmin.model.Car;
+import com.tsAdmin.model.CarList;
 
 /** 
  * 模拟退火调度器
@@ -68,6 +68,7 @@ public class SimulatedAnnealingScheduler extends Scheduler
         // ========== 模拟退火主循环 ==========
         for (int i = 0; i < MAX_ITERATION_TIME && temperature > MIN_TEMPERATURE; i++)
         {
+            // TODO
             // 生成邻域解（通过交换或转移操作）
             List<Assignment> newAssignments = generateNeighbor(currAssignment);
             
@@ -288,9 +289,11 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments) {
      *                false = 当前选中的是终点（卸货）
      * @return 配对的节点，如果找不到返回null
      */
-    private PathNode findPairNode(List<PathNode> nodeList, String orderUUID, boolean isOrigin) {
+    private PathNode findPairNode(List<PathNode> nodeList, String orderUUID, boolean isOrigin)
+    {
         // 遍历所有节点，找到配对的节点
-        for (PathNode node : nodeList) {
+        for (PathNode node : nodeList)
+        {
             // 检查两个条件：
             // 条件1：必须是同一个订单（UUID相同）
             boolean sameOrder = node.getDemand().getUUID().equals(orderUUID);
@@ -351,19 +354,23 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments) {
             }
             
             // 模拟执行当前操作
-            if (nodeToExecute.isOrigin()) {
+            if (nodeToExecute.isOrigin())
+            {
                 // 装货：减少剩余载重和体积
-                remainingLoad -= nodeToExecute.getQuantity();
+                remainingLoad -= nodeToExecute.getDemand().getQuantity();
                 remainingVolume -= nodeToExecute.getDemand().getVolume();
-            } else {
+            }
+            else
+            {
                 // 卸货：增加剩余载重和体积
-                remainingLoad += nodeToExecute.getQuantity();
+                remainingLoad += nodeToExecute.getDemand().getQuantity();
                 remainingVolume += nodeToExecute.getDemand().getVolume();
             }
             
             // 检查约束是否满足
             if (remainingLoad < 0 || remainingLoad > assignment.getCar().getMaxLoad() || 
-                remainingVolume < 0 || remainingVolume > assignment.getCar().getMaxVolume()) {
+                remainingVolume < 0 || remainingVolume > assignment.getCar().getMaxVolume())
+            {
                 return false; // 约束不满足，不能交换
             }
         }
@@ -390,11 +397,11 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments) {
             // 模拟执行现有操作
             if (existingNode.isOrigin()) {
                 // 装货：减少剩余载重和体积
-                remainingLoad -= existingNode.getQuantity();
+                remainingLoad -= existingNode.getDemand().getQuantity();
                 remainingVolume -= existingNode.getDemand().getVolume();
             } else {
                 // 卸货：增加剩余载重和体积
-                remainingLoad += existingNode.getQuantity();
+                remainingLoad += existingNode.getDemand().getQuantity();
                 remainingVolume += existingNode.getDemand().getVolume();
             }
             
@@ -408,10 +415,10 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments) {
         // ========== 第二步：模拟执行新添加的起点-终点对 ==========
         // 模拟起点操作（装货）
         if (startNode.isOrigin()) {
-            remainingLoad -= startNode.getQuantity();
+            remainingLoad -= startNode.getDemand().getQuantity();
             remainingVolume -= startNode.getDemand().getVolume();
         } else {
-            remainingLoad += startNode.getQuantity();
+            remainingLoad += startNode.getDemand().getQuantity();
             remainingVolume += startNode.getDemand().getVolume();
         }
         
@@ -423,16 +430,17 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments) {
         
         // 模拟终点操作（卸货）
         if (endNode.isOrigin()) {
-            remainingLoad -= endNode.getQuantity();
+            remainingLoad -= endNode.getDemand().getQuantity();
             remainingVolume -= endNode.getDemand().getVolume();
         } else {
-            remainingLoad += endNode.getQuantity();
+            remainingLoad += endNode.getDemand().getQuantity();
             remainingVolume += endNode.getDemand().getVolume();
         }
         
         // 检查终点操作后的约束
-        if (remainingLoad < 0 || remainingLoad > assignment.getCar().getMaxLoad() || 
-            remainingVolume < 0 || remainingVolume > assignment.getCar().getMaxVolume()) {
+        if (remainingLoad < 0 || remainingLoad > assignment.getCar().getMaxLoad() ||
+            remainingVolume < 0 || remainingVolume > assignment.getCar().getMaxVolume())
+            {
             return false;
         }
         
@@ -447,7 +455,8 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments) {
      * @param assignments 原分配方案
      * @return 拷贝后的分配方案
      */
-    private List<Assignment> deepCopyAssignments(List<Assignment> assignments) {
+    private List<Assignment> deepCopyAssignments(List<Assignment> assignments)
+    {
         List<Assignment> copies = new ArrayList<>();
         
         // 遍历每个分配方案，创建深拷贝
@@ -456,7 +465,8 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments) {
             Assignment copy = new Assignment(new Car(original.getCar()));
             
             // 拷贝PathNode列表，确保每个PathNode都是独立的
-            for (PathNode op : original.getNodeList()) {
+            for (PathNode op : original.getNodeList())
+            {
                 // 创建新的PathNode，保持相同的Demand引用和isOrigin状态
                 copy.addPathNode(new PathNode(op.getDemand(), op.isOrigin()));
             }
@@ -482,7 +492,8 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments) {
             
             // 在原始车辆列表中查找对应的车辆
             for (Car originalCar : originalCars) {
-                if (car.getUUID().equals(originalCar.getUUID())) {
+                if (car.getUUID().equals(originalCar.getUUID()))
+                {
                     // 找到匹配的车辆，开始同步操作
                     
                     // 清空原始车辆的操作列表，准备接收新的操作序列
@@ -490,7 +501,8 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments) {
                     
                     // 将Assignment中的操作添加到Car的pathNodes中
                     // 这样前端就能获取到优化后的操作序列
-                    for (PathNode node : assignment.getNodeList()) {
+                    for (PathNode node : assignment.getNodeList())
+                    {
                         originalCar.addPathNode(node);
                     }
                 }

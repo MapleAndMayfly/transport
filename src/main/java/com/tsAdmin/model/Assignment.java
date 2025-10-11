@@ -3,6 +3,8 @@ package com.tsAdmin.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.tsAdmin.common.PathNode;
+
 public class Assignment
 {
     private Car car;

@@ -50,10 +50,7 @@ public class MainConfig extends JFinalConfig
 
     /** 配置处理器 */
     @Override
-    public void configHandler(Handlers me)
-    {
-        
-    }
+    public void configHandler(Handlers me) {}
 
     @Override
     public void configEngine(Engine arg0) {}

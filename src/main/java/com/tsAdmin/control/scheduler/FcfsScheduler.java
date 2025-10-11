@@ -1,14 +1,14 @@
-package com.tsAdmin.control;
+package com.tsAdmin.control.scheduler;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import com.tsAdmin.common.PathNode;
 import com.tsAdmin.model.Assignment;
 import com.tsAdmin.model.Car;
 import com.tsAdmin.model.CarList;
 import com.tsAdmin.model.Demand;
 import com.tsAdmin.model.DemandList;
-import com.tsAdmin.model.PathNode;
 
 /**先来先服务调度算法 */
 public class FcfsScheduler extends Scheduler

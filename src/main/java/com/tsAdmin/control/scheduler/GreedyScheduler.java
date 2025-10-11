@@ -1,18 +1,18 @@
-package com.tsAdmin.control;
+package com.tsAdmin.control.scheduler;
 
+import com.tsAdmin.common.PathNode;
 import com.tsAdmin.model.Assignment;
 import com.tsAdmin.model.Car;
 import com.tsAdmin.model.CarList;
 import com.tsAdmin.model.Demand;
 import com.tsAdmin.model.DemandList;
-import com.tsAdmin.model.PathNode;
 import com.tsAdmin.model.Product;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 贪心调度器，实现了Scheduler接口，
+ * 贪心调度器，继承Scheduler类，
  * 按照贪心策略为车辆分配需求操作。
  * 
  * 修改后的逻辑：
@@ -144,9 +144,9 @@ public class GreedyScheduler extends Scheduler
         
         // ========== 第〇步：对必须一货多车特殊处理 ==========
         // TODO: 事实上对于不必须一货多车的订单也可以考虑多车运输，后续可以考虑优化
-        if(startNode.getQuantity()> 30000)//30000表示最大车辆的最大载重
+        if(startNode.getDemand().getQuantity()> 30000)//30000表示最大车辆的最大载重
         {
-            if(car.getMaxLoad() < 0.33*startNode.getQuantity()) return false;
+            if(car.getMaxLoad() < 0.33*startNode.getDemand().getQuantity()) return false;
             else                                                return true;
         }
 
@@ -156,24 +156,25 @@ public class GreedyScheduler extends Scheduler
             // 模拟执行现有操作
             if (existingNode.isOrigin()) {
                 // 装货：减少剩余载重和体积
-                remainingLoad -= existingNode.getQuantity();
+                remainingLoad -= existingNode.getDemand().getQuantity();
                 remainingVolume -= existingNode.getDemand().getVolume();
             } else {
                 // 卸货：增加剩余载重和体积
-                remainingLoad += existingNode.getQuantity();
+                remainingLoad += existingNode.getDemand().getQuantity();
                 remainingVolume += existingNode.getDemand().getVolume();
             }
             
             // 检查约束是否满足
             if (remainingLoad < 0 || remainingLoad > car.getMaxLoad() || 
-                remainingVolume < 0 || remainingVolume > car.getMaxVolume()) {
+                remainingVolume < 0 || remainingVolume > car.getMaxVolume())
+            {
                 return false; // 现有序列已经违反约束
             }
         }
         
         // ========== 第二步：模拟执行新添加的起点-终点对 ==========
         // 模拟起点操作（装货）
-        remainingLoad -= startNode.getQuantity();
+        remainingLoad -= startNode.getDemand().getQuantity();
         remainingVolume -= startNode.getDemand().getVolume();
         
         // 检查起点操作后的约束
@@ -183,7 +184,7 @@ public class GreedyScheduler extends Scheduler
         }
         
         // 模拟终点操作（卸货）
-        remainingLoad += endNode.getQuantity();
+        remainingLoad += endNode.getDemand().getQuantity();
         remainingVolume += endNode.getDemand().getVolume();
         
         // 检查终点操作后的约束
@@ -196,9 +197,12 @@ public class GreedyScheduler extends Scheduler
     }
 
     // 获取该车辆的Assignment对象，如果没有则创建一个新的
-    private Assignment getAssignmentForCar(List<Assignment> assignments, Car car) {
-        for (Assignment assignment : assignments) {
-            if (assignment.getCar().getUUID().equals(car.getUUID())) {
+    private Assignment getAssignmentForCar(List<Assignment> assignments, Car car)
+    {
+        for (Assignment assignment : assignments)
+        {
+            if (assignment.getCar().getUUID().equals(car.getUUID()))
+            {
                 return assignment;
             }
         }

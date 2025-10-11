@@ -13,12 +13,11 @@ import com.tsAdmin.model.DemandList;
  */
 public class CarBehaviour
 {
-    // 关联的车辆对象，代表当前行为操作的目标车辆
     Car car;
 
     /**
      * 构造方法，初始化行为对象时绑定一辆车
-     * @param car 指向拥有行为的车辆自身
+     * @param car 指向拥有该行为的车辆自身
      */
     public CarBehaviour(Car car)
     {
@@ -76,7 +75,7 @@ public class CarBehaviour
                 break;
 
             case UNLOADING: // 卸货完成
-                car.getCarStat().settripCount(car.getCarStat().gettripCount()+1);
+                car.getCarStat().setTripCount(car.getCarStat().getTripCount()+1);
                 // 卸货时，车辆的载重和体积会减少，剩余载重和体积随之增加
                 car.setLoad(car.getLoad() - car.getCurrDemand().productVehicleAssignments(car.getUUID()).getQuantity()); // 减去当前订单的货物数量
                 car.setRemainingLoad(car.getMaxLoad() - car.getLoad());         // 更新剩余载重

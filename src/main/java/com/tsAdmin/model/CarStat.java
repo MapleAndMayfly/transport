@@ -4,7 +4,8 @@ package com.tsAdmin.model;
  * 车辆统计参数类，用于存储每辆车的运营统计数据。
  * 后续可逐步添加更多参数。
  */
-public class CarStat {
+public class CarStat
+{
     // 车辆累计接单数
     private int tripCount = 0;
     // 车辆累计行驶距离（单位：米或公里，视业务需求）
@@ -40,12 +41,12 @@ public class CarStat {
      * @return 行驶距离
      */
     public double getTotalDistance() { return totalDistance; }
+    public void setTripCount(int tripCount){ this.tripCount=tripCount; }
+    public int  getTripCount() {return tripCount;}
     /**
      * 设置车辆累计行驶距离
      * @param totalDistance 行驶距离
      */
-    public void settripCount(int tripCount){ this.tripCount=tripCount; }
-    public int  gettripCount() {return tripCount;}
     public void setTotalDistance(double totalDistance) { this.totalDistance = totalDistance; }
 
     

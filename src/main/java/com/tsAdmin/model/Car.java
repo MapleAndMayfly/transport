@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.tsAdmin.common.Coordinate;
+import com.tsAdmin.common.PathNode;
 import com.tsAdmin.common.Timer;
 import com.tsAdmin.control.CarBehaviour;
 
@@ -97,6 +98,7 @@ public class Car
 
     // Getter
     public String getUUID() { return uuid; }
+    public CarType getType() { return carType; }
     public int getMaxLoad() { return maxLoad; }
     public int getMaxVolume() { return maxVolume; }
     public int getLoad() { return load; }

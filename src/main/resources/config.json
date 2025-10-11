@@ -1,0 +1,9 @@
+{
+    "configs":
+    {
+        "DataUpdater.update_interval": 5e3,
+        "DataUpdater.demand_per_cycle": 0,
+        "Timer.tick_speed": 20,
+        "CarList.car_num": 100
+    }
+}

@@ -8,10 +8,9 @@ import java.util.Random;
 
 import com.jfinal.core.Controller;
 import com.jfinal.kit.JsonKit;
-
+import com.tsAdmin.common.PathNode;
 import com.tsAdmin.model.Car;
 import com.tsAdmin.model.CarList;
-import com.tsAdmin.model.PathNode;
 
 /**
  * 数据控制器
@@ -27,6 +26,7 @@ public class DataController extends Controller
     private static int lastCost = 100;
     // 保留历史总代价
     private static final List<Integer> costHistory = new ArrayList<>();
+
     public void getPoiData()
     {
         String type = getPara("type");
@@ -37,9 +37,10 @@ public class DataController extends Controller
     public void getCarData()
     {
         List<Map<String, String>> posList = DBManager.getCarData();
-        renderJson(JsonKit.toJson(posList));      
+        renderJson(JsonKit.toJson(posList));
     }
 
+    // TODO: 修改
     public void getDashboardData()
     {
         Random rand = new Random();
@@ -74,7 +75,7 @@ public class DataController extends Controller
             myMap.put("status", car.getState());
             myMap.put("lat", car.getPosition().lat);
             myMap.put("lon", car.getPosition().lon);
-            myMap.put("tripCount", car.getCarStat().gettripCount());
+            myMap.put("tripCount", car.getCarStat().getTripCount());
             myMap.put("totalWeight", car.getCarStat().getTotalWeight());
             myMap.put("totalDistance", car.getCarStat().getTotalDistance());
             myMap.put("waitingTime", car.getCarStat().getWaitingTime());
@@ -91,9 +92,10 @@ public class DataController extends Controller
         "costHistory", recentHistory,
         "labels", labels,
         "carMetrics", carMetrics
-        ));         
+        ));
     }
 
+    // TODO: 修改
     public void getComparisonData() {
         Random rand = new Random();
     
@@ -172,21 +174,24 @@ public class DataController extends Controller
             "metrics", metrics
         ));
     }
-    
 
-    private double roundTo3(double d) 
+    private double roundTo3(double d)
     {
         return Math.round(d * 1000.0) / 1000.0;
     }
 
-    /** 前端调取后端入口，周期结束标志 */
+    /**
+     * 调用后车辆计时器tick一次，若计时器归零
+     */
     public void getDestination()
     {
         String uuid = getPara("UUID");
         Car car = CarList.carList.get(uuid);
         Map<String, Double> dest = null;
+
         car.tick();
         if(car.getStateTimer().timeUp()) { car.changeState(); }
+
         switch (car.getState())
         {
             case ORDER_TAKEN:
@@ -199,6 +204,7 @@ public class DataController extends Controller
                 car.deleteFirstNode();
                 break;
             }
+
             case TRANSPORTING:
             {
                 PathNode pathnode = car.getFirstNode();
@@ -209,6 +215,7 @@ public class DataController extends Controller
                 car.deleteFirstNode();
                 break;
             }
+
             default:
                 break;
         }

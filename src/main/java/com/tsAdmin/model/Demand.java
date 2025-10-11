@@ -6,13 +6,9 @@ import com.tsAdmin.model.Product.ProductType;;
 /** 需求 */
 public class Demand
 {
-    /** 唯一标识符 */
     private String uuid;
-    /** 起点 */
     private Coordinate origin;
-    /** 终点 */
     private Coordinate destination;
-    /** 货物 */
     private Product product;
     /** 是否已经分配完毕 */
     private boolean isFullyAssigned;
@@ -45,9 +41,6 @@ public class Demand
     }
 
     // Setter
-    // public void setOrigin(Coordinate origin) { this.origin = origin; }
-    // public void setDestination(Coordinate destination) { this.destination = destination; }
-    // public void setProduct(Product product) { this.product = product; }
     public void setQuantity(int quantity) { this.product.setQuantity(quantity); }
     public void setVolume(int volume) { this.product.setVolume(volume); }
     public void setProcessed() { this.isFullyAssigned = true; }

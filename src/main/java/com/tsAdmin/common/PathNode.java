@@ -1,4 +1,6 @@
-package com.tsAdmin.model;
+package com.tsAdmin.common;
+
+import com.tsAdmin.model.Demand;
 
 /** 车辆路径点 */
 public class PathNode
@@ -14,6 +16,4 @@ public class PathNode
 
     public Demand getDemand() { return demand; }
     public boolean isOrigin() { return isOrigin; }
-    // TODO:???
-    public double getQuantity() { return demand.getQuantity(); }
 }

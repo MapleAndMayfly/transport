@@ -1,15 +1,18 @@
-package com.tsAdmin.control;
+package com.tsAdmin.control.scheduler;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.tsAdmin.common.Coordinate;
+import com.tsAdmin.common.PathNode;
 import com.tsAdmin.model.Assignment;
 import com.tsAdmin.model.Car;
 import com.tsAdmin.model.CarList;
 import com.tsAdmin.model.Demand;
-import com.tsAdmin.model.PathNode;
 
+/**
+ * 调度器抽象类，作为所有调度器父类
+ */
 public abstract class Scheduler
 {
     abstract public List<Assignment> schedule();
@@ -51,7 +54,7 @@ public abstract class Scheduler
     {
         double distanceWeight = 0.5;    // 距离权重
         double loadWeight = 0.2;        // 载重权重
-        double waitTimeWeight = 0.2;    // 等待时间权重
+        double waitTimeWeight = 0.3;    // 等待时间权重
         // double timeoutWeight = 1;    // 超时时间权重
 
         double distance = 0;
