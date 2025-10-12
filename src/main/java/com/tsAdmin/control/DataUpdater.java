@@ -6,16 +6,32 @@ import com.tsAdmin.control.scheduler.*;
 
 public class DataUpdater implements Runnable
 {
-    Scheduler scheduler = new SimulatedAnnealingScheduler();
+    Scheduler scheduler;
 
     @Override
     public void run()
     {
-        // ms
-        final long UPDATE_INTERVAL = ConfigLoader.getLong("DataUpdater.update_interval", (long)5e3);
-        final int DEMAND_PER_CYCLE = ConfigLoader.getInt("DataUpdater.demand_per_cycle", 0);
+        // s => ms
+        final long UPDATE_INTERVAL = ConfigLoader.getInt("Main.update_interval", 5) * 1000;
+        final int DEMAND_PER_CYCLE = ConfigLoader.getInt("DataUpdater.demand_per_cycle");
 
-        // 线程运行旗标
+        // 根据配置文件设置相应的调度器
+        switch (ConfigLoader.getString("DataUpdater.applied_scheduler"))
+        {
+            case "FCFS":
+                scheduler = new FcfsScheduler();
+                break;
+
+            case "Greedy":
+                scheduler = new GreedyScheduler();
+                break;
+
+            case "SA":
+            default:
+                scheduler = new SimulatedAnnealingScheduler();
+                break;
+        }
+
         boolean isRunning = true;
         long lastUpdate = System.currentTimeMillis();
         long currentTime;

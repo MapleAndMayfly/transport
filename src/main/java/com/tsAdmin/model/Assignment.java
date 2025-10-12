@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.tsAdmin.common.PathNode;
+import com.tsAdmin.model.car.Car;
 
 public class Assignment
 {
@@ -18,7 +19,8 @@ public class Assignment
     public List<PathNode> getNodeList() { return nodeList; }
     public double getCurrentLoad()
     {
-        return nodeList.stream().mapToDouble(op -> op.isOrigin() ? op.getDemand().getQuantity() : -op.getDemand().getQuantity())
-                                .sum();
+        return nodeList.stream()
+                       .mapToDouble(op -> op.isOrigin() ? op.getDemand().getQuantity() : -op.getDemand().getQuantity())
+                       .sum();
     }
 }

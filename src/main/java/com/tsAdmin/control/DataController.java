@@ -9,8 +9,8 @@ import java.util.Random;
 import com.jfinal.core.Controller;
 import com.jfinal.kit.JsonKit;
 import com.tsAdmin.common.PathNode;
-import com.tsAdmin.model.Car;
-import com.tsAdmin.model.CarList;
+import com.tsAdmin.model.car.Car;
+import com.tsAdmin.model.car.CarList;
 
 /**
  * 数据控制器
@@ -40,7 +40,7 @@ public class DataController extends Controller
         renderJson(JsonKit.toJson(posList));
     }
 
-    // TODO: 修改
+    // FIXME: 修改数据获取
     public void getDashboardData()
     {
         Random rand = new Random();
@@ -49,7 +49,7 @@ public class DataController extends Controller
         lastCost += rand.nextInt(50) - 20;
         costHistory.add(lastCost);
 
-                // 限制最大长度
+        // 限制最大长度
         if (costHistory.size() > 1000) {
             costHistory.remove(0);
         }
@@ -95,8 +95,9 @@ public class DataController extends Controller
         ));
     }
 
-    // TODO: 修改
-    public void getComparisonData() {
+    // FIXME: 修改数据获取
+    public void getComparisonData()
+    {
         Random rand = new Random();
     
         globalPeriod++;
@@ -117,13 +118,16 @@ public class DataController extends Controller
         };
     
         // 初始化每个车辆的每个指标列表
-        for (String key : keys) {
-            for (String vid : vehicleIds) {
+        for (String key : keys)
+        {
+            for (String vid : vehicleIds)
+            {
                 String compoundKey = key + "_" + vid;
                 vehicleRatioMap.putIfAbsent(compoundKey, new ArrayList<>());
                 List<Double> list = vehicleRatioMap.get(compoundKey);
                 double val;
-                switch (key) {
+                switch (key)
+                {
                     case "totalDistance" -> val = 0.1 + rand.nextDouble() * 0.88+rand.nextDouble() * 0.09;  // 0.81 ~ 1.2
                     case "waitingTime" -> val = 0.12 + rand.nextDouble() * 0.75+rand.nextDouble() * 0.09;   // 0.72 ~ 1.03
                     case "emptyDistance" -> val = 0.35 + rand.nextDouble() * 0.60+rand.nextDouble() * 0.09; // 0.65 ~ 1.06

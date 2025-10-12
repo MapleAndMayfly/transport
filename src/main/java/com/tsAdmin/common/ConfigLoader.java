@@ -11,31 +11,33 @@ import java.nio.charset.StandardCharsets;
  */
 public final class ConfigLoader
 {
-    private static String configPath;
+    private static String usedConfig;
     private static JSONObject configData;
 
+    /**
+     * 从 resources/config.json 加载配置数据
+     */
     static
     {
-        // 从 resources/config.json 加载配置数据
-        loadConfig("config.json");
+        use("config.json");
     }
 
     private ConfigLoader(){}
 
-    public static void loadConfig(String path)
+    public static void use(String path)
     {
-        configPath = path;
+        usedConfig = path;
         loadConfig();
     }
 
-    public static void loadConfig()
+    private static void loadConfig()
     {
         try
         {
-            InputStream inputStream = ConfigLoader.class.getClassLoader().getResourceAsStream(configPath);
+            InputStream inputStream = ConfigLoader.class.getClassLoader().getResourceAsStream(usedConfig);
             if (inputStream == null)
             {
-                throw new RuntimeException(configPath + " 文件丢失");
+                throw new RuntimeException(usedConfig + " 不存在！");
             }
 
             String jsonString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
@@ -44,7 +46,7 @@ public final class ConfigLoader
 
             if (configData == null)
             {
-                throw new RuntimeException(configPath + " 中缺少 \"configs\" 节点");
+                throw new RuntimeException(usedConfig + " 中缺少 \"configs\" 节点");
             }
 
             inputStream.close();

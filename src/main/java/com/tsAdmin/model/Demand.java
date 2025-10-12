@@ -1,5 +1,8 @@
 package com.tsAdmin.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.model.Product.ProductType;;
 
@@ -15,7 +18,7 @@ public class Demand
     /** 该订单分配予的车辆数 */
     private int assignedVehicles;
     /** 该订单的具体分配情况 */
-    private TransportAssignment<String,Product> vehicleAssignments;
+    private Map<String, Product> vehicleAssignments;
 
     public Demand(String uuid, Coordinate origin, Coordinate destination, Product product)
     {
@@ -25,7 +28,7 @@ public class Demand
         this.product = product;
         this.isFullyAssigned = false;
         this.assignedVehicles = 0;
-        this.vehicleAssignments=new TransportAssignment<String,Product>();
+        this.vehicleAssignments = new HashMap<String, Product>();
     }
 
     /**  拷贝构造方法 */
@@ -37,7 +40,8 @@ public class Demand
         this.destination = new Coordinate(other.destination.lat, other.destination.lon);
         this.assignedVehicles = other.assignedVehicles;
         this.isFullyAssigned = other.isFullyAssigned;
-        this.vehicleAssignments=new TransportAssignment<String,Product>(other.vehicleAssignments.entries());
+        // XXX: 原来的类代码里是浅拷贝所以这里我改的也是，但是可能在调度时出现问题
+        this.vehicleAssignments = new HashMap<String, Product>(other.vehicleAssignments);
     }
 
     // Setter
@@ -47,7 +51,7 @@ public class Demand
     public void addAssignedVehicles() { this.assignedVehicles++; }
     public void cutAssignedVehicles() { this.assignedVehicles--; }
     public void addVehicleAssignments(String uuid,Product product) { this.vehicleAssignments.put(uuid,product); }
-    public void finishVehicleAssignments(String uuid) { this.vehicleAssignments.removeByKey(uuid); }
+    public void finishVehicleAssignments(String uuid) { this.vehicleAssignments.remove(uuid); }
 
     // Getter
     public String getUUID() { return uuid; }
@@ -58,7 +62,7 @@ public class Demand
     public int getVolume() { return product.getVolume(); }
     public boolean isFullyAssigned() { return isFullyAssigned; }
     public int getAssignedVehicles() { return assignedVehicles; }
-    public Product productVehicleAssignments(String uuid) { return this.vehicleAssignments.getValueByKey(uuid); }
+    public Product productVehicleAssignments(String uuid) { return this.vehicleAssignments.get(uuid); }
 
     public int routeLength()
     {

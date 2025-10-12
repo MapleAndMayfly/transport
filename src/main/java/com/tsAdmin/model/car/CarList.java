@@ -1,4 +1,4 @@
-package com.tsAdmin.model;
+package com.tsAdmin.model.car;
 
 import java.util.HashMap;
 import java.util.List;
@@ -6,12 +6,11 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
-import com.jfinal.plugin.activerecord.Record;
 import com.tsAdmin.common.ConfigLoader;
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.control.DBManager;
-import com.tsAdmin.model.Car.CarState;
-import com.tsAdmin.model.Car.CarType;
+import com.tsAdmin.model.car.Car.CarState;
+import com.tsAdmin.model.car.Car.CarType;
 
 public class CarList
 {
@@ -29,7 +28,9 @@ public class CarList
     public static void init()
     {
         int carNum = ConfigLoader.getInt("CarList.car_num", 100);
-        // TODO: 可改为查看车辆数：若多则只取所需；若少则增加车辆
+        /* FIXME: 可改为查看车辆数，以避免车辆不足的情况发生。
+         * 逻辑大致为：若多则只取所需；若少则增加车辆
+         * if (DBManager.getCount("car") < carNum) {...} */
         if (DBManager.isTableEmpty("car"))
         {
             for (int i = 0; i < carNum; i++)
@@ -64,18 +65,19 @@ public class CarList
             }
         }
 
-        List<Record> records = DBManager.getCars();
-        for (Record record : records)
+        List<Map<String, String>> records = DBManager.getCars();
+        for (Map<String, String> record : records)
         {
-            String uuid = record.getStr("UUID");
-            CarType carType = CarType.valueOf(record.getStr("type"));
-            int maxLoad = record.getInt("maxload");
-            int maxVolume = record.getInt("maxvolume");
-            double lat = record.getDouble("location_lat");
-            double lon = record.getDouble("location_lon");
+            String uuid = record.get("UUID");
+            CarType carType = CarType.valueOf(record.get("type"));
+            int maxLoad = Integer.parseInt(record.get("maxload"));
+            int maxVolume = Integer.parseInt(record.get("maxvolume"));
+            double lat = Double.parseDouble(record.get("location_lat"));
+            double lon = Double.parseDouble(record.get("location_lon"));
 
             Car car = new Car(uuid, carType, maxLoad, maxVolume, new Coordinate(lat, lon));
-            // 两次setState: 第一次将上一状态set为当前状态，第二次set会自动将其转移至上一状态
+
+            // 两次setState: 第一次将上一状态set为currState，第二次set会自动将其转移至prevState
             car.setState(CarState.AVAILABLE);
             car.setState(CarState.AVAILABLE);
             car.setLoad(0);
@@ -100,11 +102,10 @@ public class CarList
      */
     private static final Coordinate getNaturalRandomLocation()
     {
-        double maxRadius = 0.12; // 最大半径约2公里
+        // 最大半径约2公里
+        double maxRadius = 0.12;
 
-        // 随机角度
         double angle = RANDOM.nextDouble() % 2 * Math.PI;
-        
         // 随机距离（使用平方根使分布更均匀）
         double distance = Math.sqrt(RANDOM.nextDouble()) * maxRadius;
 
@@ -122,7 +123,8 @@ public class CarList
     @SuppressWarnings("unused")
     private static final Coordinate getCircularLocation(int i)
     {
-        double radius = 1; // 分布半径
+        // 分布半径
+        double radius = 1;
 
         double angle = 2 * Math.PI * i / 100;
         return new Coordinate(

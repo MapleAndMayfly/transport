@@ -10,7 +10,7 @@ import com.tsAdmin.model.Product;
 import com.tsAdmin.model.Product.ProductType;
 import com.tsAdmin.model.processor.Processor;
 
-/** 生产厂(抽象) */
+/** 生产厂类，是所有生产厂的父类 */
 public abstract class Producer extends Manufacturer
 {
     protected static final Random RANDOM = new Random();

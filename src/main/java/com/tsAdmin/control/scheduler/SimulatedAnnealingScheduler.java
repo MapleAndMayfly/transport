@@ -7,8 +7,8 @@ import java.util.Random;
 
 import com.tsAdmin.common.PathNode;
 import com.tsAdmin.model.Assignment;
-import com.tsAdmin.model.Car;
-import com.tsAdmin.model.CarList;
+import com.tsAdmin.model.car.Car;
+import com.tsAdmin.model.car.CarList;
 
 /** 
  * 模拟退火调度器
@@ -26,14 +26,12 @@ import com.tsAdmin.model.CarList;
  */
 public class SimulatedAnnealingScheduler extends Scheduler
 {
-    // 使用类级别的Random对象，避免重复创建，提高性能
-    // 同时确保随机性的一致性
-    Random random = new Random();
+    private final Random RANDOM = new Random();
 
     // ========== 模拟退火算法参数 ==========
-    final double MIN_TEMPERATURE = 1.0;        // 最小温度，低于此温度停止迭代
-    final double COOLING_RATE = 0.95;          // 冷却率，控制温度下降速度
-    final int MAX_ITERATION_TIME = 500;       // 最大迭代次数，防止无限循环
+    private final double MIN_TEMPERATURE = 1.0;        // 最小温度，低于此温度停止迭代
+    private final double COOLING_RATE = 0.95;          // 冷却率，控制温度下降速度
+    private final int MAX_ITERATION_TIME = 500;       // 最大迭代次数，防止无限循环
 
 
     /**
@@ -68,7 +66,6 @@ public class SimulatedAnnealingScheduler extends Scheduler
         // ========== 模拟退火主循环 ==========
         for (int i = 0; i < MAX_ITERATION_TIME && temperature > MIN_TEMPERATURE; i++)
         {
-            // TODO
             // 生成邻域解（通过交换或转移操作）
             List<Assignment> newAssignments = generateNeighbor(currAssignment);
             
@@ -82,7 +79,7 @@ public class SimulatedAnnealingScheduler extends Scheduler
             // 接受条件：
             // 1. 新解更优（deltaCost < 0）
             // 2. 或者以一定概率接受劣解（模拟退火的核心思想）
-            boolean accept = deltaCost < 0 || Math.exp(-deltaCost / temperature) > random.nextDouble();
+            boolean accept = deltaCost < 0 || Math.exp(-deltaCost / temperature) > RANDOM.nextDouble();
 
             if (accept)
             {
@@ -130,23 +127,23 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments) {
         List<Assignment> newAssignments = deepCopyAssignments(assignments);
         
         // 随机选择交换方式
-        int swapType = random.nextInt(3); // 0, 1, 2，分别代表三种交换方式
+        int swapType = RANDOM.nextInt(3); // 0, 1, 2，分别代表三种交换方式
 
         // ==================== 交换操作：同一订单的起点终点成对交换 ====================
         if (swapType == 0) {
             // 交换操作：同一订单的起点终点成对交换
-            int index1 = random.nextInt(newAssignments.size());
-            int index2 = random.nextInt(newAssignments.size());
+            int index1 = RANDOM.nextInt(newAssignments.size());
+            int index2 = RANDOM.nextInt(newAssignments.size());
             if (index1 == index2) return newAssignments; // 如果选择了同一个序列，直接返回
 
             Assignment a1 = newAssignments.get(index1); // 第一个车辆序列
             Assignment a2 = newAssignments.get(index2); // 第二个车辆序列
 
             // 确保两个序列都不为空
-            if (!a1.getNodeList().isEmpty() && !a2.getNodeList().isEmpty()) {
-
+            if (!a1.getNodeList().isEmpty() && !a2.getNodeList().isEmpty())
+            {
                 // 在第一个序列中查找订单对
-                int dIndex1 = random.nextInt(a1.getNodeList().size());
+                int dIndex1 = RANDOM.nextInt(a1.getNodeList().size());
                 PathNode op1 = a1.getNodeList().get(dIndex1); // 获取选中的操作
                 String orderUUID1 = op1.getDemand().getUUID(); // 获取订单UUID
 
@@ -154,7 +151,7 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments) {
                 if (pairOp1 == null) return newAssignments;
 
                 // 在第二个序列中查找订单对
-                int dIndex2 = random.nextInt(a2.getNodeList().size());
+                int dIndex2 = RANDOM.nextInt(a2.getNodeList().size());
                 PathNode op2 = a2.getNodeList().get(dIndex2); // 获取选中的操作
                 String orderUUID2 = op2.getDemand().getUUID(); // 获取订单UUID
 
@@ -199,8 +196,8 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments) {
         // ==================== 移动操作：同一订单的起点终点成对转移 ====================
         else if (swapType == 1) {
             // 移动操作：同一订单的起点终点成对转移
-            int fromIndex = random.nextInt(newAssignments.size());
-            int toIndex = random.nextInt(newAssignments.size());
+            int fromIndex = RANDOM.nextInt(newAssignments.size());
+            int toIndex = RANDOM.nextInt(newAssignments.size());
             if (fromIndex == toIndex) return newAssignments; // 如果选择了同一个序列，直接返回
 
             Assignment from = newAssignments.get(fromIndex); // 源车辆序列
@@ -209,7 +206,7 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments) {
             // 确保源序列不为空
             if (!from.getNodeList().isEmpty()) {
 
-                int dIndex = random.nextInt(from.getNodeList().size());
+                int dIndex = RANDOM.nextInt(from.getNodeList().size());
                 PathNode op = from.getNodeList().get(dIndex);
                 String orderUUID = op.getDemand().getUUID();
 
@@ -255,9 +252,9 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments) {
 
                 // 如果有终点节点，随机移动到序列中其他位置
                 if (!endNodes.isEmpty()) {
-                    PathNode randomEndNode = endNodes.get(random.nextInt(endNodes.size())); // 随机选取一个终点
+                    PathNode randomEndNode = endNodes.get(RANDOM.nextInt(endNodes.size())); // 随机选取一个终点
                     nodeList.remove(randomEndNode);  // 从原位置移除该终点
-                    int newIndex = random.nextInt(nodeList.size() + 1);  // 随机确定新位置
+                    int newIndex = RANDOM.nextInt(nodeList.size() + 1);  // 随机确定新位置
                     nodeList.add(newIndex, randomEndNode);  // 将终点添加到新位置
                 }
             }

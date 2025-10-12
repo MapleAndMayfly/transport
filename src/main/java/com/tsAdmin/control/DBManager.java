@@ -6,9 +6,8 @@ import java.util.Map;
 
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.Db;
-
-import com.tsAdmin.model.Car;
 import com.tsAdmin.model.Demand;
+import com.tsAdmin.model.car.Car;
 
 public class DBManager
 {
@@ -23,9 +22,9 @@ public class DBManager
 
     /**
      * 获取POI数据列表
-     * @param type 要获取的对象类型，只能为POI_TABLES中的键所对应的字符串
+     * @param type 要获取的对象类型，只能为{@code POI_TABLES}中的键所对应的字符串
      * @return 所有该类型POI数据的列表，每一条数据包含id, name, location_lat, location_lon
-     * @throws IllegalAgumentException 传入的POI类型未定义
+     * @throws IllegalAgumentException 如果传入的POI类型未定义
      */
     public static List<Map<String, String>> getPoiData(String type)
     {
@@ -95,50 +94,101 @@ public class DBManager
         return POIData;
     }
 
-    public static boolean isTableEmpty(String tableName)
+    public static long getCount(String tableName)
     {
         try
         {
             String sql = "SELECT COUNT(*) AS count FROM " + tableName;
             Record record = Db.findFirst(sql);
-            if (record == null) {
+            if (record == null)
+            {
                 throw new RuntimeException("Query failed");
             }
-            return record.getLong("count") == 0;
-        } catch (Exception e) {
+            return record.getLong("count");
+        }
+        catch (Exception e)
+        {
             e.printStackTrace();
-            return false;
+            return -1;
         }
     }
 
-    public static void updateCarPos(Car car)
+    /**
+     * 判断数据表是否为空
+     * @param tableName 数据表名
+     * @return {@code true} 如果查询出错（如表格不存在）或表格为空
+     */
+    public static boolean isTableEmpty(String tableName)
     {
-        String sql = "UPDATE car SET location_lat = ?, location_lon = ? WHERE UUID = ?";
-        Db.update(sql, car.getPosition().lat, car.getPosition().lon, car.getUUID());
+        return getCount(tableName) <= 0;
     }
 
-    public static void updateCarState(Car car)
+    public static List<Map<String, String>> getDemands()
     {
-        String sql = "UPDATE car SET state = ?, prestate = ? WHERE UUID = ?";
-        Db.update(sql, car.getState().toString(), car.getPrevState().toString(), car.getUUID().toString());
+        List<Map<String, String>> demandData = new ArrayList<>();
+        
+        try
+        {
+            String sql = "SELECT UUID, origin_lat, origin_lon, destination_lat, destination_lon, type, quantity, volume FROM demand";
+            List<Record> rawData = Db.find(sql);
+            
+            if (rawData != null && !rawData.isEmpty())
+            {
+                for (Record record : rawData)
+                {
+                    Map<String, String> element = Map.of(
+                        "UUID", record.get("UUID"),
+                        "origin_lat", record.get("origin_lat").toString(),
+                        "origin_lon", record.get("origin_lon").toString(),
+                        "destination_lat", record.get("destination_lat").toString(),
+                        "destination_lon", record.get("destination_lon").toString(),
+                        "type", record.get("type"),
+                        "quantity", record.get("quantity").toString(),
+                        "volume", record.get("volume").toString()
+                    );
+                    demandData.add(element);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        
+        return demandData;
     }
 
-    public static void updateCarTime(Car car)
+    public static List<Map<String, String>> getCars()
     {
-        String sql = "UPDATE car SET time = ? WHERE UUID = ?";
-        Db.update(sql, car.getStateTimer().getTime(), car.getUUID());
-    }
-
-    public static List<Record> getDemands()
-    {
-        String sql = "SELECT UUID, origin_lat, origin_lon, destination_lat, destination_lon, type, quantity, volume FROM demand";
-        return Db.find(sql);
-    }
-
-    public static List<Record> getCars()
-    {
-        String sql = "SELECT UUID, type, maxload, maxvolume, location_lat, location_lon FROM car";
-        return Db.find(sql);
+        List<Map<String, String>> carData = new ArrayList<>();
+        
+        try
+        {
+            String sql = "SELECT UUID, type, maxload, maxvolume, location_lat, location_lon FROM car";
+            List<Record> rawData = Db.find(sql);
+            
+            if (rawData != null && !rawData.isEmpty())
+            {
+                for (Record record : rawData)
+                {
+                    Map<String, String> element = Map.of(
+                        "UUID", record.get("UUID"),
+                        "type", record.get("type"),
+                        "maxload", record.get("maxload").toString(),
+                        "maxvolume", record.get("maxvolume").toString(),
+                        "location_lat", record.get("location_lat").toString(),
+                        "location_lon", record.get("location_lon").toString()
+                    );
+                    carData.add(element);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        
+        return carData;
     }
 
     /**
@@ -160,7 +210,8 @@ public class DBManager
     }
 
     /**
-     * 保存车辆到数据库 <i>仅在初始化无车辆时调用</i>
+     * 保存车辆到数据库
+     * <p><i>仅在初始化车辆数不足时调用</i>
      * @param car 要保存的车辆
      */
     public static void saveCar(Car car)
@@ -173,6 +224,29 @@ public class DBManager
                  .set("location_lat", car.getPosition().lat)
                  .set("location_lon", car.getPosition().lon);
         Db.save("car", carRecord);
+    }
+
+    /* ================== 以下内容会导致模拟时无法保证情况相同，暂时废弃 ================== */
+
+    @Deprecated
+    public static void updateCarPos(Car car)
+    {
+        String sql = "UPDATE car SET location_lat = ?, location_lon = ? WHERE UUID = ?";
+        Db.update(sql, car.getPosition().lat, car.getPosition().lon, car.getUUID());
+    }
+
+    @Deprecated
+    public static void updateCarState(Car car)
+    {
+        String sql = "UPDATE car SET state = ?, prestate = ? WHERE UUID = ?";
+        Db.update(sql, car.getState().toString(), car.getPrevState().toString(), car.getUUID().toString());
+    }
+
+    @Deprecated
+    public static void updateCarTime(Car car)
+    {
+        String sql = "UPDATE car SET time = ? WHERE UUID = ?";
+        Db.update(sql, car.getStateTimer().getTime(), car.getUUID());
     }
 
     /**
@@ -189,7 +263,7 @@ public class DBManager
     /**
      * 从数据库删除订单
      * @param demand 要删除订单
-     * @return 删除 成功 (true) | 失败 (false)
+     * @return {@code true} 如果删除成功
      */
     @Deprecated
     public static boolean deleteDemand(Demand demand)
@@ -203,7 +277,7 @@ public class DBManager
         catch (Exception e)
         {
             e.printStackTrace();
+            return false;
         }
-        return false;
     }
 }

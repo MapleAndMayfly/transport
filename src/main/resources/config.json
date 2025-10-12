@@ -1,9 +1,12 @@
 {
+    "name": "Default",
     "configs":
     {
-        "DataUpdater.update_interval": 5e3,
-        "DataUpdater.demand_per_cycle": 0,
+        "Main.port": 8080,
+        "Main.update_interval": 5,
         "Timer.tick_speed": 20,
+        "DataUpdater.demand_per_cycle": 0,
+        "DataUpdater.applied_scheduler": "SA",
         "CarList.car_num": 100
     }
 }

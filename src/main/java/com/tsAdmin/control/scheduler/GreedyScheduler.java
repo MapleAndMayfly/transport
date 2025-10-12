@@ -2,11 +2,11 @@ package com.tsAdmin.control.scheduler;
 
 import com.tsAdmin.common.PathNode;
 import com.tsAdmin.model.Assignment;
-import com.tsAdmin.model.Car;
-import com.tsAdmin.model.CarList;
 import com.tsAdmin.model.Demand;
 import com.tsAdmin.model.DemandList;
 import com.tsAdmin.model.Product;
+import com.tsAdmin.model.car.Car;
+import com.tsAdmin.model.car.CarList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -143,7 +143,7 @@ public class GreedyScheduler extends Scheduler
         double remainingVolume = car.getRemainingVolume();
         
         // ========== 第〇步：对必须一货多车特殊处理 ==========
-        // TODO: 事实上对于不必须一货多车的订单也可以考虑多车运输，后续可以考虑优化
+        // FIXME: 事实上对于不必须一货多车的订单也可以考虑多车运输，可以优化
         if(startNode.getDemand().getQuantity()> 30000)//30000表示最大车辆的最大载重
         {
             if(car.getMaxLoad() < 0.33*startNode.getDemand().getQuantity()) return false;
@@ -151,7 +151,7 @@ public class GreedyScheduler extends Scheduler
         }
 
         // ========== 第一步：模拟执行现有序列 ==========
-        /*TODO: 不是很理解，任何一辆车模拟完现有序列后应该都是合理的并且车辆载重为0了呀 */
+        /* XXX: 不是很理解，任何一辆车模拟完现有序列后应该都是合理的并且车辆载重为0了呀 */
         for (PathNode existingNode : car.getNodeList()) {
             // 模拟执行现有操作
             if (existingNode.isOrigin()) {

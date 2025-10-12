@@ -1,4 +1,4 @@
-package com.tsAdmin.model;
+package com.tsAdmin.model.car;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.List;
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.common.PathNode;
 import com.tsAdmin.common.Timer;
-import com.tsAdmin.control.CarBehaviour;
+import com.tsAdmin.model.Demand;
 
 /** 车辆 */
 public class Car
@@ -45,13 +45,14 @@ public class Car
         FREEZE
     }
 
-    private String uuid;                                // 唯一标识符
-    private int maxLoad, maxVolume;                     // 车辆荷载
-    private int load, volume;                           // 车辆载重
-    private double remainingLoad, remainingVolume;      // 车辆剩余
+    private String uuid;                                // 车辆唯一标识符
+    private int maxLoad, maxVolume;                     // 车辆荷载量
+    // FIXME: 当前载重量与剩余载重量几乎是一个东西，应当简化
+    private int load, volume;                           // 车辆当前载重量
+    private double remainingLoad, remainingVolume;      // 车辆剩余载重量
     private CarType carType;                            // 车辆类型
-    private Coordinate position;                        // 车辆位置
-    private List<PathNode> nodeList = new ArrayList<>();// 车辆订单二元组
+    private Coordinate position;                        // 车辆当前位置
+    private List<PathNode> nodeList = new ArrayList<>();// 车辆订单路径列表
     private CarBehaviour behaviour;                     // 车辆行为
     private CarState currState;                         // 当前车辆状态
     private CarState prevState;                         // 上一车辆状态
@@ -116,9 +117,9 @@ public class Car
     public CarStat getCarStat() { return carStat; }
 
     public boolean isType(CarType carType) { return this.carType == carType; }
-    public void tick() { 
+    public void tick()
+    {
         stateTimer.tick(); 
-        // 每次仿真推进，累计车辆总时间（单位：秒，步长为30）
         carStat.setExistTime(carStat.getExistTime() + 30);
     }
     public void changeState(){ behaviour.changeState(); }

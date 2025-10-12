@@ -61,6 +61,7 @@ public class MainConfig extends JFinalConfig
         return new DruidPlugin(
             PropKit.get(head + "jdbcUrl"),
             PropKit.get(head + "user"),
-            PropKit.get(head + "password"));
+            PropKit.get(head + "password")
+        );
     }
 }

@@ -6,7 +6,7 @@ import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.control.DBManager;
 import com.tsAdmin.model.Product.ProductType;
 
-public class ProducerFactory
+public class ProducerManager
 {
     private static Map<ProductType, String> typeStr = Map.of(
         ProductType.PHARMACEUTICAL, "pharmaProducer",

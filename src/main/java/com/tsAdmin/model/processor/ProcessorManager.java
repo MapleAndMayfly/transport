@@ -6,7 +6,7 @@ import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.control.DBManager;
 import com.tsAdmin.model.Product.ProductType;
 
-public class ProcessorFactory
+public class ProcessorManager
 {
     private static Map<ProductType, String> typeStr = Map.of(
         ProductType.PHARMACEUTICAL, "pharmaProcessor",
@@ -30,7 +30,7 @@ public class ProcessorFactory
         else throw new RuntimeException("数据库中没找到生产厂");
     }
 
-    private static Processor factory(ProductType type, String uuid, String name, Coordinate coordinate) 
+    private static Processor factory(ProductType type, String uuid, String name, Coordinate coordinate)
     {
         Processor ret = null;
 

@@ -1,10 +1,9 @@
-package com.tsAdmin.control;
+package com.tsAdmin.model.car;
 
 import java.util.Random;
 
-import com.tsAdmin.model.Car;
-import com.tsAdmin.model.Car.CarState;
 import com.tsAdmin.model.DemandList;
+import com.tsAdmin.model.car.Car.CarState;
 
 /**
  * 车辆行为类，负责管理车辆的状态流转和相关业务逻辑。
@@ -13,7 +12,8 @@ import com.tsAdmin.model.DemandList;
  */
 public class CarBehaviour
 {
-    Car car;
+    private final Random RANDOM = new Random();
+    private final Car car;
 
     /**
      * 构造方法，初始化行为对象时绑定一辆车
@@ -30,10 +30,9 @@ public class CarBehaviour
      */
     public void changeState()
     {
-        Random random = new Random(); // 用于生成随机数，模拟现实中的不确定性
-        int randomNumber = random.nextInt(100); // 生成0-99的随机数，用于概率判断
+        int randNum = RANDOM.nextInt(100);
 
-        CarState nextState = car.getState(); // 默认下一个状态为当前状态，后续根据业务逻辑调整
+        CarState nextState = car.getState();
 
         // 根据车辆当前状态决定状态转移
         switch (car.getState())
@@ -41,7 +40,7 @@ public class CarBehaviour
             case ORDER_TAKEN: // 已接单，准备装货
             car.setPosition(car.getCurrDemand().getOrigin());
                 // 96%概率进入装货状态，4%概率进入冻结状态（如遇到突发状况）
-                if      (randomNumber < 96) nextState = CarState.LOADING;
+                if      (randNum < 96) nextState = CarState.LOADING;
                 else                        nextState = CarState.FREEZE;
                 break;
 
@@ -59,15 +58,15 @@ public class CarBehaviour
                     }
                 }
                 // 97%概率进入下一个节点配置的状态（如运输/接单），2%概率直接卸货，1%概率冻结
-                if      (randomNumber < 97) nextState = configFromNextNode();
-                else if (randomNumber < 99) nextState = CarState.UNLOADING;
+                if      (randNum < 97) nextState = configFromNextNode();
+                else if (randNum < 99) nextState = CarState.UNLOADING;
                 else                        nextState = CarState.FREEZE;
                 break;
 
             case TRANSPORTING: // 运输完成
             car.setPosition(car.getCurrDemand().getDestination());
                 // 99%概率运输完成后进入卸货，1%概率运输途中遇到异常进入冻结
-                if (randomNumber < 99) {
+                if (randNum < 99) {
                     nextState = CarState.UNLOADING;
                 } else {
                     nextState = CarState.FREEZE;
@@ -93,7 +92,7 @@ public class CarBehaviour
                 if(car.getCurrDemand().getAssignedVehicles()==0)
                 {if(DemandList.demandList.remove(car.getCurrDemand().getUUID()) == null) System.err.println("删除订单出错");}
                 // 97%概率变为可用，3%概率冻结（如卸货异常）
-                if (randomNumber < 97)      nextState = CarState.AVAILABLE;
+                if (randNum < 97)      nextState = CarState.AVAILABLE;
                 else                        nextState = CarState.FREEZE;
                 break;
 
@@ -105,7 +104,7 @@ public class CarBehaviour
                         nextState = CarState.LOADING;
                         break;
                     case LOADING:           // 上一状态为装货，97%概率继续后续节点，3%概率直接卸货
-                        if (randomNumber < 97)
+                        if (randNum < 97)
                         {                   nextState=configFromNextNode(); }
                         else                nextState = CarState.UNLOADING;
                         break;
@@ -147,8 +146,9 @@ public class CarBehaviour
         car.setstateTimer(getBehaviourTime(nextState));
         // 更新车辆状态为下一个状态
         car.setState(nextState);
+
         // 同步车辆状态到数据库，保证数据一致性
-        DBManager.updateCarState(car);
+        // DBManager.updateCarState(car);
 
         // 在状态切换前，统计等待时间（只统计等待类状态）
         if (car.getState() == CarState.LOADING || car.getState() == CarState.UNLOADING || car.getState() == CarState.FREEZE || car.getState() == CarState.AVAILABLE) {

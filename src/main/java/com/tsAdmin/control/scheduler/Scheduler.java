@@ -6,9 +6,9 @@ import java.util.List;
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.common.PathNode;
 import com.tsAdmin.model.Assignment;
-import com.tsAdmin.model.Car;
-import com.tsAdmin.model.CarList;
 import com.tsAdmin.model.Demand;
+import com.tsAdmin.model.car.Car;
+import com.tsAdmin.model.car.CarList;
 
 /**
  * 调度器抽象类，作为所有调度器父类

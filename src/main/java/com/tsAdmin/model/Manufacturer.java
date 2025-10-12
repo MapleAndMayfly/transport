@@ -2,7 +2,7 @@ package com.tsAdmin.model;
 
 import com.tsAdmin.common.Coordinate;
 
-/** 厂商类(抽象) */
+/** 厂商类，是所有厂商的父类 */
 public abstract class Manufacturer
 {
     protected String uuid;

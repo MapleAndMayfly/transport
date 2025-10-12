@@ -1,4 +1,4 @@
-package com.tsAdmin.model;
+package com.tsAdmin.model.car;
 
 /**
  * 车辆统计参数类，用于存储每辆车的运营统计数据。
