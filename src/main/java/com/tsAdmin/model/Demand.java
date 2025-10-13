@@ -1,8 +1,5 @@
 package com.tsAdmin.model;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.model.Product.ProductType;;
 

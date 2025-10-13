@@ -457,7 +457,7 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments)
     private List<Assignment> deepCopyAssignments(List<Assignment> assignments)
     {
         List<Assignment> copies = new ArrayList<>();
-        
+
         // 遍历每个分配方案，创建深拷贝
         for (Assignment original : assignments) {
             // 创建新的Assignment对象，包含车辆的深拷贝

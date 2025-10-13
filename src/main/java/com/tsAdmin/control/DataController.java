@@ -160,7 +160,8 @@ public class DataController extends Controller
         metrics.add(Map.of("metric", "cost", "name", "系统cost", "series", systemSeries));
     
         // 其他9个指标
-        for (int i = 0; i < keys.length; i++) {
+        for (int i = 0; i < keys.length; i++)
+        {
             String key = keys[i];
             String name = names[i];
             List<Map<String, Object>> series = new ArrayList<>();

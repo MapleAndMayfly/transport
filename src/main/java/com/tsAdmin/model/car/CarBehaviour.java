@@ -46,8 +46,8 @@ public class CarBehaviour
 
             case LOADING: // 装货完成
                 // 装货时，车辆的载重和体积会增加，剩余载重和体积随之减少
-                car.setLoad(car.getLoad()+car.getCurrDemand().productVehicleAssignments(car.getUUID()).getQuantity()); // 增加当前订单的货物数量
-                car.setVolume(car.getVolume()+car.getCurrDemand().productVehicleAssignments(car.getUUID()).getVolume()); // 增加当前订单的货物体积
+                car.setLoad(car.getLoad() + car.getCurrDemand().getQuantity()); // 增加当前订单的货物数量
+                car.setVolume(car.getVolume() + car.getCurrDemand().getVolume()); // 增加当前订单的货物体积
                 // 统计本次装货的浪费载重
                 if (car.getCurrDemand() != null) {
                     int wasted = car.getMaxLoad() - car.getCurrDemand().getQuantity();
@@ -74,19 +74,15 @@ public class CarBehaviour
             case UNLOADING: // 卸货完成
                 car.getCarStat().setTripCount(car.getCarStat().getTripCount()+1);
                 // 卸货时，车辆的载重和体积会减少，剩余载重和体积随之增加
-                car.setLoad(car.getLoad() - car.getCurrDemand().productVehicleAssignments(car.getUUID()).getQuantity()); // 减去当前订单的货物数量
-                car.setVolume(car.getVolume() - car.getCurrDemand().productVehicleAssignments(car.getUUID()).getVolume()); // 减去当前订单的货物体积
+                car.setLoad(car.getLoad() - car.getCurrDemand().getQuantity()); // 减去当前订单的货物数量
+                car.setVolume(car.getVolume() - car.getCurrDemand().getVolume()); // 减去当前订单的货物体积
                 // 累加本次卸货的货物重量到统计参数
                 if (car.getCurrDemand() != null) {
                     int quantity = car.getCurrDemand().getQuantity();
                     car.getCarStat().setTotalWeight(car.getCarStat().getTotalWeight() + quantity);
                 }
-                // 从订单里移除该车的分配情况
-                car.getCurrDemand().finishVehicleAssignments(car.getUUID());
-                car.getCurrDemand().cutAssignedVehicles();
                 // 若订单全部完成从需求列表中移除已完成的订单，若移除失败则打印错误
-                if(car.getCurrDemand().getAssignedVehicles()==0)
-                {if(DemandList.demandList.remove(car.getCurrDemand().getUUID()) == null) System.err.println("删除订单出错");}
+                DemandList.demandList.remove(car.getCurrDemand().getUUID());
                 // 97%概率变为可用，3%概率冻结（如卸货异常）
                 if (randNum < 97)      nextState = CarState.AVAILABLE;
                 else                        nextState = CarState.FREEZE;
@@ -180,10 +176,10 @@ public class CarBehaviour
         {
         case LOADING:
             // 装货时间与货物数量成正比，比例系数0.01
-            return (int)(0.01 * car.getCurrDemand().productVehicleAssignments(car.getUUID()).getQuantity());
+            return (int)(0.01 * car.getCurrDemand().getQuantity());
         case UNLOADING:
             // 卸货时间与货物数量成正比，比例系数0.01
-            return (int)(0.01 * car.getCurrDemand().productVehicleAssignments(car.getUUID()).getQuantity());
+            return (int)(0.01 * car.getCurrDemand().getQuantity());
         case FREEZE:
             // 冻结状态固定30秒，模拟车辆故障或等待恢复
             return 30;

@@ -24,13 +24,13 @@
         {
             "name": "订单生成速率",
             "unit": "个/周期",
-            "value": 100
+            "value": 0
         },
         "DataUpdater.applied_scheduler":
         {
             "name": "采用的调度器",
             "unit": "",
-            "value": "FCFS"
+            "value": "Greedy"
         },
         "CarList.car_num":
         {
