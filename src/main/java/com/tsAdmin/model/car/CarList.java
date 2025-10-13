@@ -105,13 +105,12 @@ public class CarList
         // 最大半径约2公里
         double maxRadius = 0.12;
 
-        double angle = RANDOM.nextDouble() % 2 * Math.PI;
-        // 随机距离（使用平方根使分布更均匀）
+        double angle = RANDOM.nextDouble() * 2 * Math.PI;
         double distance = Math.sqrt(RANDOM.nextDouble()) * maxRadius;
 
         // 计算偏移量（经度需要根据纬度调整）
         double latOffset = distance * Math.sin(angle);
-        double lngOffset = distance * Math.cos(angle) / Math.cos(Math.toRadians(defaultLocation.lat));
+        double lngOffset = distance * Math.cos(angle) ;// Math.cos(Math.toRadians(defaultLocation.lat));
 
         return new Coordinate(
             defaultLocation.lat + latOffset,

@@ -47,9 +47,7 @@ public class CarBehaviour
             case LOADING: // 装货完成
                 // 装货时，车辆的载重和体积会增加，剩余载重和体积随之减少
                 car.setLoad(car.getLoad()+car.getCurrDemand().productVehicleAssignments(car.getUUID()).getQuantity()); // 增加当前订单的货物数量
-                car.setRemainingLoad(car.getMaxLoad()-car.getLoad());         // 更新剩余载重
                 car.setVolume(car.getVolume()+car.getCurrDemand().productVehicleAssignments(car.getUUID()).getVolume()); // 增加当前订单的货物体积
-                car.setRemainingVolume(car.getMaxVolume()-car.getVolume());     // 更新剩余体积
                 // 统计本次装货的浪费载重
                 if (car.getCurrDemand() != null) {
                     int wasted = car.getMaxLoad() - car.getCurrDemand().getQuantity();
@@ -77,9 +75,7 @@ public class CarBehaviour
                 car.getCarStat().setTripCount(car.getCarStat().getTripCount()+1);
                 // 卸货时，车辆的载重和体积会减少，剩余载重和体积随之增加
                 car.setLoad(car.getLoad() - car.getCurrDemand().productVehicleAssignments(car.getUUID()).getQuantity()); // 减去当前订单的货物数量
-                car.setRemainingLoad(car.getMaxLoad() - car.getLoad());         // 更新剩余载重
                 car.setVolume(car.getVolume() - car.getCurrDemand().productVehicleAssignments(car.getUUID()).getVolume()); // 减去当前订单的货物体积
-                car.setRemainingVolume(car.getMaxVolume() - car.getVolume());     // 更新剩余体积
                 // 累加本次卸货的货物重量到统计参数
                 if (car.getCurrDemand() != null) {
                     int quantity = car.getCurrDemand().getQuantity();

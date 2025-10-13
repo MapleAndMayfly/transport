@@ -12,16 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 贪心调度器，继承Scheduler类，
- * 按照贪心策略为车辆分配需求操作。
- * 
- * 修改后的逻辑：
- * 1. 只处理新的demand（isNew=true）
- * 2. 使用深拷贝避免修改原始数据
- * 3. 先遍历新demand，在每个demand内遍历车辆
- * 4. 选车逻辑：模拟整个序列执行过程判断约束，满足约束才计算cost，选择cost最小的车
- * 5. 分配成功则将isFullyAssigned改为true，否则保持为false
- * 6. 只修改序列，不修改车辆的实际属性（载重、时间、位置等）
+ * 贪心算法调度器
+ * <p>仅对新产生/未分配的订单进行分配
  */
 public class GreedyScheduler extends Scheduler
 {
@@ -29,95 +21,71 @@ public class GreedyScheduler extends Scheduler
     public List<Assignment> schedule()
     {
         List<Assignment> assignments = new ArrayList<>();
-        
-        // ========== 第一步：筛选未分配完成的demand ==========
-        List<Demand> newDemands = new ArrayList<>();
+        List<Demand> demandsToAssign = new ArrayList<>();
+
+        // 筛选出未处理的订单
         for (Demand demand : DemandList.demandList.values())
         {
-            if (!demand.isFullyAssigned()) {
-                newDemands.add(demand);
-            }
+            if (!demand.isAssigned()) demandsToAssign.add(demand);
         }
-        
-        // 如果没有新的demand，直接返回空的分配结果
-        if (newDemands.isEmpty()) {
-            return assignments;
-        }
-        
-        // ========== 第二步：深拷贝车辆 ==========
+        if (demandsToAssign.isEmpty()) return assignments;
+
+        // 有订单未处理，根据调度算法进行调度
         List<Car> carsCopy = new ArrayList<>();
-        for (Car car : CarList.carList.values())
-        {
-            carsCopy.add(new Car(car)); // 深拷贝车辆
-        }
+        for (Car car : CarList.carList.values()) carsCopy.add(new Car(car));
 
-        // ========== 第三步：贪心分配新的demand ==========
-        // 遍历所有新的demand
-        for (Demand demand : newDemands) 
+        for (Demand demand : demandsToAssign)
         {
-            while(!demand.isFullyAssigned())
-            {
-                Car bestCar = null;
-                double minCost = Double.MAX_VALUE;
+            Car bestCar = null;
+            double minCost = Double.POSITIVE_INFINITY;
+
+            // 为当前demand创建起点和终点PathNode
+            PathNode startNode = new PathNode(demand, true);   // 起点（装货）
+            PathNode endNode = new PathNode(demand, false);    // 终点（卸货）
+
+            // 遍历所有车辆，选择最佳车辆来处理当前demand
+            for (Car car : carsCopy) {
+                // ========== 模拟整个序列执行过程，判断约束 ==========
+                if (!canAddDemandPairToSequence(car, startNode, endNode)) {
+                    // 不满足约束，跳过这辆车，不计算cost
+                    continue;
+                }
                 
-                // 为当前demand创建起点和终点PathNode
-                PathNode startNode = new PathNode(demand, true);   // 起点（装货）
-                PathNode endNode = new PathNode(demand, false);    // 终点（卸货）
-
-                // 遍历所有车辆，选择最佳车辆来处理当前demand
-                for (Car car : carsCopy) {
-                    // ========== 模拟整个序列执行过程，判断约束 ==========
-                    if (!canAddDemandPairToSequence(car, startNode, endNode)) {
-                        // 不满足约束，跳过这辆车，不计算cost
-                        continue;
-                    }
-                    
-                    // ========== 满足约束，计算cost ==========
-                    // 临时添加起点-终点对到车辆序列进行cost计算
-                    car.addPathNode(startNode);
-                    car.addPathNode(endNode);
-                    
-                    // 使用调度器的totalCost方法计算整个序列的成本
-                    double cost = totalCost(car, car.getNodeList());
-                    
-                    // 移除临时添加的节点，恢复原序列
-                    car.getNodeList().remove(car.getNodeList().size() - 1); // 移除终点
-                    car.getNodeList().remove(car.getNodeList().size() - 1); // 移除起点
-                    
-                    // 更新最佳车辆
-                    if (cost < minCost) {
-                        minCost = cost;
-                        bestCar = car;
-                    }
+                // ========== 满足约束，计算cost ==========
+                // 临时添加起点-终点对到车辆序列进行cost计算
+                car.addPathNode(startNode);
+                car.addPathNode(endNode);
+                
+                // 使用调度器的totalCost方法计算整个序列的成本
+                double cost = totalCost(car, car.getNodeList());
+                
+                // 移除临时添加的节点，恢复原序列
+                car.getNodeList().remove(car.getNodeList().size() - 1); // 移除终点
+                car.getNodeList().remove(car.getNodeList().size() - 1); // 移除起点
+                
+                // 更新最佳车辆
+                if (cost < minCost) {
+                    minCost = cost;
+                    bestCar = car;
                 }
-                // ========== 分配结果处理 ==========
-                if (bestCar != null) {
-                    // 找到合适的车辆，进行分配
-                    Assignment assignment = getAssignmentForCar(assignments, bestCar);
-                    assignment.addPathNode(startNode);  // 先添加起点
-                    assignment.addPathNode(endNode);    // 再添加终点，保持顺序
-                    
-                    // 将操作同步到Car类中（只修改序列）
-                    bestCar.addPathNode(startNode);
-                    bestCar.addPathNode(endNode);
-                    
-                    // 设置订单的分配情况
-                    demand.addAssignedVehicles();
-                    int quantity=Math.min(demand.getQuantity(),bestCar.getMaxLoad());
-                    int volume=quantity/(demand.getQuantity()/demand.getVolume());
-                    Product product =new Product(demand.getType(),quantity,volume);
-                    demand.addVehicleAssignments(bestCar.getUUID(),product);
-                    demand.addAssignedVehicles();
-                    // 更新订单剩余货物
-                    demand.setQuantity(demand.getQuantity()-quantity);
-                    demand.setVolume(demand.getVolume()-volume);
-                    // 无剩余货物标记demand完全分配
-                    if(demand.getQuantity() <= 0)demand.setProcessed();
-                    //System.out.println("成功为需求 " + demand.getUUID() + " 分配车辆 " + bestCar.getUUID() + "，成本: " + minCost);
-                } else {
-                    //没有找到合适的车辆，订单无变化
-                    //System.out.println("无法为需求 " + demand.getUUID() + " 分配车辆，保持订单");
-                }
+            }
+            // ========== 分配结果处理 ==========
+            if (bestCar != null) {
+                // 找到合适的车辆，进行分配
+                Assignment assignment = getAssignmentForCar(assignments, bestCar);
+                assignment.addPathNode(startNode);  // 先添加起点
+                assignment.addPathNode(endNode);    // 再添加终点，保持顺序
+                
+                // 将操作同步到Car类中（只修改序列）
+                bestCar.addPathNode(startNode);
+                bestCar.addPathNode(endNode);
+                
+                // 分配成功，标记demand为已分配
+                demand.setAssigned();
+                //System.out.println("成功为需求 " + demand.getUUID() + " 分配车辆 " + bestCar.getUUID() + "，成本: " + minCost);
+            } else {
+                //没有找到合适的车辆，订单无变化
+                //System.out.println("无法为需求 " + demand.getUUID() + " 分配车辆，保持订单");
             }
         }
 
@@ -142,16 +110,7 @@ public class GreedyScheduler extends Scheduler
         double remainingLoad = car.getRemainingLoad();
         double remainingVolume = car.getRemainingVolume();
         
-        // ========== 第〇步：对必须一货多车特殊处理 ==========
-        // FIXME: 事实上对于不必须一货多车的订单也可以考虑多车运输，可以优化
-        if(startNode.getDemand().getQuantity()> 30000)//30000表示最大车辆的最大载重
-        {
-            if(car.getMaxLoad() < 0.33*startNode.getDemand().getQuantity()) return false;
-            else                                                return true;
-        }
-
         // ========== 第一步：模拟执行现有序列 ==========
-        /* XXX: 不是很理解，任何一辆车模拟完现有序列后应该都是合理的并且车辆载重为0了呀 */
         for (PathNode existingNode : car.getNodeList()) {
             // 模拟执行现有操作
             if (existingNode.isOrigin()) {
@@ -166,8 +125,7 @@ public class GreedyScheduler extends Scheduler
             
             // 检查约束是否满足
             if (remainingLoad < 0 || remainingLoad > car.getMaxLoad() || 
-                remainingVolume < 0 || remainingVolume > car.getMaxVolume())
-            {
+                remainingVolume < 0 || remainingVolume > car.getMaxVolume()) {
                 return false; // 现有序列已经违反约束
             }
         }
@@ -197,12 +155,9 @@ public class GreedyScheduler extends Scheduler
     }
 
     // 获取该车辆的Assignment对象，如果没有则创建一个新的
-    private Assignment getAssignmentForCar(List<Assignment> assignments, Car car)
-    {
-        for (Assignment assignment : assignments)
-        {
-            if (assignment.getCar().getUUID().equals(car.getUUID()))
-            {
+    private Assignment getAssignmentForCar(List<Assignment> assignments, Car car) {
+        for (Assignment assignment : assignments) {
+            if (assignment.getCar().getUUID().equals(car.getUUID())) {
                 return assignment;
             }
         }

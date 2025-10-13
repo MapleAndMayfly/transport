@@ -15,6 +15,10 @@ import com.tsAdmin.model.car.CarList;
  */
 public abstract class Scheduler
 {
+    /**
+     * 调度方法，根据车辆列表与订单列表进行合理调度
+     * @return 调度结果
+     */
     abstract public List<Assignment> schedule();
 
     protected void syncAssignmentsToCars(List<Assignment> assignments)
@@ -43,7 +47,7 @@ public abstract class Scheduler
     }
 
     /**
-     * 计算车辆在当前状态下执行某需求的成本
+     * 计算车辆在当前状态下执行某需求的代价
      * @param car 车辆对象
      * @param pathNode 带装载状态的需求
      * @param LoadandTimenow 当前车辆载重和时间数组
@@ -52,6 +56,7 @@ public abstract class Scheduler
      */
     double cost(Car car, PathNode pathNode, Double remainingLoad, Double totalTime, Coordinate carPosition)
     {
+        // TODO: 完善代价计算，使其更加合理
         double distanceWeight = 0.5;    // 距离权重
         double loadWeight = 0.2;        // 载重权重
         double waitTimeWeight = 0.3;    // 等待时间权重
@@ -92,12 +97,7 @@ public abstract class Scheduler
         {
             double cost = cost(car, nodeList.get(i), remainingLoad, totalTime, carPosition);
             totalCost += cost;
-            // 记录本次任务cost（最后一次为最新任务）
-            car.getCarStat().setCost(cost);
         }
-
-        // 记录累计totalCost
-        car.getCarStat().setTotalCost(totalCost);
 
         return totalCost;
     }

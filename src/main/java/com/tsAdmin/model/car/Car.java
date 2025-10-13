@@ -24,7 +24,7 @@ public class Car
         OVERSIZED,
         /** 油罐车 */
         TANKER,
-        /** 减震车辆（运送精密仪器，例如卫星，导弹，高端服务器等等） */
+        /** 减震车辆（运送精密仪器，例如卫星，导弹，高端服务器等） */
         SHOCK_ABSORBER
     }
 
@@ -47,9 +47,7 @@ public class Car
 
     private String uuid;                                // 车辆唯一标识符
     private int maxLoad, maxVolume;                     // 车辆荷载量
-    // FIXME: 当前载重量与剩余载重量几乎是一个东西，应当简化
     private int load, volume;                           // 车辆当前载重量
-    private double remainingLoad, remainingVolume;      // 车辆剩余载重量
     private CarType carType;                            // 车辆类型
     private Coordinate position;                        // 车辆当前位置
     private List<PathNode> nodeList = new ArrayList<>();// 车辆订单路径列表
@@ -60,13 +58,19 @@ public class Car
     private Demand currDemand;                          // 目前订单缓存
     private CarStat carStat;                            // 车辆统计参数
 
-    public Car(Car c)
+    /**
+     * 车辆的拷贝构造方法
+     * <p><i>拷贝得到的车辆不带有行为类、计时器以及统计数据等数据</i>
+     * @param others 被拷贝的车辆
+     */
+    public Car(Car others)
     {
-        this(c.uuid, c.carType, c.maxLoad, c.maxVolume, c.position);
-        this.remainingLoad = c.remainingLoad;
-        this.remainingVolume = c.remainingVolume;
-        this.carStat = new CarStat();
+        this(others.uuid, others.carType, others.maxLoad, others.maxVolume, others.position);
+        this.load = others.load;
+        this.volume = others.volume;
     }
+
+    /** 车辆构造函数 */
     public Car(String uuid, CarType carType, int maxLoad, int maxVolume, Coordinate position)
     {
         this.uuid = uuid;
@@ -85,8 +89,6 @@ public class Car
     // public void setType(CarType carType) { this.carType = carType; }
     public void setLoad(int load) { this.load = load; }
     public void setVolume(int volume) { this.volume = volume; }
-    public void setRemainingLoad(double remainingLoad) { this.remainingLoad = remainingLoad; }
-    public void setRemainingVolume(double remainingVolume) { this.remainingVolume = remainingVolume; }
     public void setPosition(Coordinate position) { this.position = position; }
     public void setNodeList(List<PathNode> nodeList) { this.nodeList = nodeList; }
     public void setCurrDemand(Demand currDemand) { this.currDemand = currDemand; }
@@ -104,8 +106,6 @@ public class Car
     public int getMaxVolume() { return maxVolume; }
     public int getLoad() { return load; }
     public int getVolume() { return volume; }
-    public double getRemainingLoad() { return remainingLoad; }
-    public double getRemainingVolume() { return remainingVolume; }
     public Coordinate getPosition() { return position; }
     public List<PathNode> getNodeList() { return nodeList; }
     public PathNode getFirstNode() { return nodeList.getFirst(); }
@@ -115,14 +115,16 @@ public class Car
     public CarState getPrevState() { return prevState; }
     public Timer getStateTimer() { return stateTimer; }
     public CarStat getCarStat() { return carStat; }
+    public double getRemainingLoad() { return maxLoad - load; }
+    public double getRemainingVolume() { return maxVolume - volume; }
 
     public boolean isType(CarType carType) { return this.carType == carType; }
     public void tick()
     {
-        stateTimer.tick(); 
+        stateTimer.tick();
         carStat.setExistTime(carStat.getExistTime() + 30);
     }
-    public void changeState(){ behaviour.changeState(); }
+    public void changeState() { behaviour.changeState(); }
     public void addPathNode(PathNode node) { nodeList.add(node); }
-    public void deleteFirstNode() { nodeList.removeFirst(); }
+    public void rmvFirstNode() { nodeList.removeFirst(); }
 }

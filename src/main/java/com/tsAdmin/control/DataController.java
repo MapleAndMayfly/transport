@@ -205,7 +205,7 @@ public class DataController extends Controller
                     "lng", pathnode.getDemand().getOrigin().lon,
                     "lat", pathnode.getDemand().getOrigin().lat
                 );
-                car.deleteFirstNode();
+                car.rmvFirstNode();
                 break;
             }
 
@@ -216,7 +216,7 @@ public class DataController extends Controller
                     "lng", pathnode.getDemand().getDestination().lon,
                     "lat", pathnode.getDemand().getDestination().lat
                 );
-                car.deleteFirstNode();
+                car.rmvFirstNode();
                 break;
             }
 

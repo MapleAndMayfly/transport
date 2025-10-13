@@ -65,28 +65,83 @@ public final class ConfigLoader
 
     public static String getString(String key, String defaultValue)
     {
-        String value = configData.getString(key);
-        return value != null ? value : defaultValue;
+        try
+        {
+            JSONObject configItem = configData.getJSONObject(key);
+            if (configItem == null) return defaultValue;
+
+            String value = configItem.getString("value");
+            return value != null ? value : defaultValue;
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return defaultValue;
+        }
     }
     public static Integer getInt(String key, Integer defaultValue)
     {
-        Integer value = configData.getInteger(key);
-        return value != null ? value : defaultValue;
+        try
+        {
+            JSONObject configItem = configData.getJSONObject(key);
+            if (configItem == null) return defaultValue;
+
+            Integer value = configItem.getInteger("value");
+            return value != null ? value : defaultValue;
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return defaultValue;
+        }
     }
     public static Long getLong(String key, Long defaultValue)
     {
-        Long value = configData.getLong(key);
-        return value != null ? value : defaultValue;
+        try
+        {
+            JSONObject configItem = configData.getJSONObject(key);
+            if (configItem == null) return defaultValue;
+
+            Long value = configItem.getLong("value");
+            return value != null ? value : defaultValue;
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return defaultValue;
+        }
     }
     public static Double getDouble(String key, Double defaultValue)
     {
-        Double value = configData.getDouble(key);
-        return value != null ? value : defaultValue;
+        try
+        {
+            JSONObject configItem = configData.getJSONObject(key);
+            if (configItem == null) return defaultValue;
+
+            Double value = configItem.getDouble("value");
+            return value != null ? value : defaultValue;
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return defaultValue;
+        }
     }
     public static Boolean getBoolean(String key, Boolean defaultValue)
     {
-        Boolean value = configData.getBoolean(key);
-        return value != null ? value : defaultValue;
+        try
+        {
+            JSONObject configItem = configData.getJSONObject(key);
+            if (configItem == null) return defaultValue;
+
+            Boolean value = configItem.getBoolean("value");
+            return value != null ? value : defaultValue;
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return defaultValue;
+        }
     }
 
     public static boolean containsKey(String key)

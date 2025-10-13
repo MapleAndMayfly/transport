@@ -122,7 +122,8 @@ public class SimulatedAnnealingScheduler extends Scheduler
      * @param assignments 当前分配方案
      * @return 新的分配方案
      */
-private List<Assignment> generateNeighbor(List<Assignment> assignments) {
+private List<Assignment> generateNeighbor(List<Assignment> assignments)
+    {
         // 深拷贝当前分配方案，避免修改原始数据
         List<Assignment> newAssignments = deepCopyAssignments(assignments);
         
@@ -262,6 +263,7 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments) {
 
         return newAssignments;
     }
+
     /**
      * 在节点列表中查找同一订单的配对节点
      * 

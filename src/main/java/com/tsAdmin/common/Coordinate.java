@@ -35,6 +35,6 @@ public class Coordinate
         double dLat = c1.lat - c2.lat;
         double dLon = c1.lon - c2.lon;
 
-        return Math.sqrt(dLat*dLat - dLon*dLon);
+        return Math.sqrt(dLat*dLat + dLon*dLon);
     }
 }
