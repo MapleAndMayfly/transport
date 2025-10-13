@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统参数配置管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        .content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        .preset-panel {
+            width: 300px;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+            padding: 25px 20px;
+        }
+        
+        .config-panel {
+            flex: 1;
+            padding: 25px 30px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .preset-list {
+            max-height: 350px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background: white;
+        }
+        
+        .preset-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .preset-item:hover {
+            background: #e3f2fd;
+        }
+        
+        .preset-item.active {
+            background: #3498db;
+            color: white;
+        }
+        
+        .preset-item:last-child {
+            border-bottom: none;
+        }
+        
+        .preset-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .preset-desc {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        
+        .preset-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #219653;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #3498db;
+            color: #3498db;
+        }
+        
+        .btn-outline:hover {
+            background: #3498db;
+            color: white;
+        }
+        
+        .config-form {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+        }
+        
+        .form-group:hover {
+            border-color: #3498db;
+            background: #f0f8ff;
+        }
+        
+        .form-group label {
+            flex: 0 0 250px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .form-control {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: border 0.2s;
+            max-width: 200px;
+        }
+        
+        .form-control:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .unit-display {
+            flex: 0 0 80px;
+            text-align: right;
+            color: #666;
+            font-size: 14px;
+            padding-left: 10px;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding-bottom: 10px;
+        }
+        
+        .config-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 12px 15px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-count {
+            background: #3498db;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        .collapse-icon {
+            transition: transform 0.3s ease;
+        }
+        
+        .section-content {
+            transition: all 0.3s ease;
+        }
+        
+        .section-content.collapsed {
+            display: none;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            width: 500px;
+            max-width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .modal-header {
+            padding: 20px 25px;
+            background: #3498db;
+            color: white;
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        .modal-footer {
+            padding: 15px 25px;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .status-message {
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .preset-panel {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+            
+            .form-group {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .form-group label {
+                flex: none;
+                margin-bottom: 8px;
+            }
+            
+            .form-control {
+                max-width: 100%;
+                width: 100%;
+            }
+            
+            .unit-display {
+                flex: none;
+                text-align: left;
+                padding-left: 0;
+                margin-top: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>系统参数配置管理</h1>
+            <p>浪曼血液，枫生蜉蝣，可不敢爱露娜吃吃我迪克</p>
+        </header>
+        
+        <div class="content">
+            <div class="preset-panel">
+                <div class="panel-title">预设</div>
+                
+                <div class="preset-list" id="preset-list">
+                </div>
+                
+                <div class="preset-actions">
+                    <button class="btn btn-success" id="save-preset-btn">
+                        <i>🗃️</i> 保存当前配置为新预设
+                    </button>
+                    <button class="btn btn-outline" id="apply-preset-btn">
+                        <i>👌</i> 应用选中预设
+                    </button>
+                    <button class="btn btn-danger" id="delete-preset-btn">
+                        <i>🗑️</i> 删除选中预设
+                    </button>
+                </div>
+            </div>
+            
+            <div class="config-panel">
+                <div class="panel-title">参数调整</div>
+                
+                <div class="status-message" id="status-message"></div>
+                
+                <form id="config-form">
+                    <div id="config-sections">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" id="reset-btn">重置</button>
+                        <button type="submit" class="btn btn-primary" id="save-btn">保存配置</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    
+
+    <script>
+        // 配置数据和预设管理
+        const configManager = {
+            currentConfig: {
+                name: "Default",
+                parameters: []
+            },
+            
+            presets: [],
+            selectedPresetId: null,
+            
+            // 获取配置数据
+            async fetchCurrentConfig() {
+                console.log("已调用 fetchCurrentConfig");
+                try {
+                    let url = new URL('/data/getConfig', window.location.origin);
+                    const response = await fetch(url);
+                    let data = await response.json();
+                    console.log("后端响应:", data);
+                    
+                    this.currentConfig = data;
+                    this.renderConfigForm();
+                    this.showStatus('配置加载成功', 'success');
+                    return data;
+                } catch (error) {
+                    console.error('获取配置数据时出错:', error);
+                    this.loadMockConfig();
+                   
+                }
+            },
+            
+            // 保存配置数据
+            async saveConfig() {
+                console.log("已调用 saveConfig");
+               
+
+            },
+            
+            // 从表单更新配置对象
+            updateConfigFromForm() {
+                console.log("更新配置表单数据");
+               
+
+            },
+            
+            // 渲染配置表单
+            renderConfigForm() {
+                console.log("渲染配置表单");
+                const sectionsContainer = document.getElementById('config-sections');
+                sectionsContainer.innerHTML = '';
+                
+                // 配置名称
+                const nameSection = document.createElement('div');
+                nameSection.className = 'config-section';
+                nameSection.innerHTML = `
+                    <div class="form-group">
+                        <label for="config-name">配置名称</label>
+                        <input type="text" id="config-name" class="form-control" value="${this.currentConfig.name || ''}">
+                        <div class="unit-display"></div>
+                    </div>
+                `;
+                sectionsContainer.appendChild(nameSection);
+                
+                // 参数显示区域
+              
+                // 添加点击事件
+                this.attachSectionEvents();
+            },
+            
+            // 渲染单个参数的HTML
+            renderParameterHTML(param, index) {
+                let inputHtml = '';
+               
+                
+            },
+            
+            // 添加点击事件
+            attachSectionEvents() {
+                document.querySelectorAll('.section-header').forEach(header => {
+                    header.addEventListener('click', () => {
+                        const content = header.nextElementSibling;
+                        const icon = header.querySelector('.collapse-icon');
+                        
+                        const isCollapsed = content.classList.contains('collapsed');
+                        content.classList.toggle('collapsed', !isCollapsed);
+                        icon.textContent = isCollapsed ? '▼' : '▶';
+                    });
+                });
+            },
+            
+            // 创建新预设
+            createPreset(name, description) {
+                this.updateConfigFromForm();
+                
+                const newPreset = {
+                    id: Date.now(),
+                    name: name,
+                    description: description,
+                    config: JSON.parse(JSON.stringify(this.currentConfig))
+                };
+                
+                this.presets.push(newPreset);
+                this.selectedPresetId = newPreset.id;
+                this.renderPresetList();
+                this.showStatus(`预设 "${name}" 创建成功`, 'success');
+                this.savePresetsToLocalStorage();
+            },
+               
+            // 渲染预设列表
+            renderPresetList() {
+                const presetList = document.getElementById('preset-list');
+              
+                
+                presetList.innerHTML = this.presets.map(preset => `
+                    <div class="preset-item ${this.selectedPresetId === preset.id ? 'active' : ''}" 
+                         data-id="${preset.id}">
+                        <div class="preset-name">${preset.name}</div>
+                        <div class="preset-desc">${preset.description}</div>
+                    </div>
+                `).join('');
+                
+                presetList.querySelectorAll('.preset-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const presetId = parseInt(item.getAttribute('data-id'));
+                        this.selectedPresetId = presetId;
+                        this.renderPresetList();
+                    });
+                });
+            },
+            
+            
+            // 初始化
+            init() {
+                console.log("初始化配置管理器");
+                this.loadPresetsFromLocalStorage();
+                this.renderPresetList();
+                this.fetchCurrentConfig();
+                
+                
+              
+                
+                document.getElementById('delete-preset-btn').addEventListener('click', () => {
+                    this.deleteSelectedPreset();
+                });
+                
+              
+            }
+        };
+
+        // 初始化配置管理器
+        document.addEventListener('DOMContentLoaded', () => {
+            configManager.init();
+        });
+    </script>
+</body>
+</html>

@@ -128,7 +128,7 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments)
         List<Assignment> newAssignments = deepCopyAssignments(assignments);
         
         // 随机选择交换方式
-        int swapType = RANDOM.nextInt(3); // 0, 1, 2，分别代表三种交换方式
+        int swapType = RANDOM.nextInt(4); // 0, 1, 2，3分别代表三种交换方式
 
         // ==================== 交换操作：同一订单的起点终点成对交换 ====================
         if (swapType == 0) {
@@ -260,6 +260,35 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments)
                 }
             }
         }
+            //微小扰动，将一个序列点进行换位，打乱顺序
+      else if (swapType == 3) {
+        int index = RANDOM.nextInt(newAssignments.size());
+        Assignment a = newAssignments.get(index);
+        if (a.getNodeList().isEmpty()) return newAssignments;
+
+        for (int i = 0; i < 100; i++) {
+            int dIndex = RANDOM.nextInt(a.getNodeList().size());
+            int swapIndex = RANDOM.nextInt(a.getNodeList().size());
+            if (dIndex == swapIndex) continue;
+
+            PathNode op = a.getNodeList().get(dIndex);
+            String orderUUID = op.getDemand().getUUID();
+            PathNode pairOp = findPairNode(a.getNodeList(), orderUUID, op.isOrigin());
+            if (pairOp == null) continue;
+
+            int pairIndex = a.getNodeList().indexOf(pairOp);
+
+            if (op.isOrigin() && swapIndex < pairIndex) {
+                PathNode removed = a.getNodeList().remove(dIndex);
+                a.getNodeList().add(swapIndex, removed);
+                break;
+            } else if (!op.isOrigin() && swapIndex > pairIndex) {
+                PathNode removed = a.getNodeList().remove(dIndex);
+                a.getNodeList().add(swapIndex, removed);
+                break;
+            }
+        }
+    }
 
         return newAssignments;
     }
