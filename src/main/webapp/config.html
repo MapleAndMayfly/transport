@@ -437,7 +437,7 @@
             async saveConfigToBackend() {
                 console.log("已调用 saveConfigToBackend");
                 try {
-                    let url = new URL('/data/updateConfig', window.location.origin);
+                    let url = new URL('/conf/getConfig', window.location.origin);
                     
                     // 构建包含键名的完整配置对象
                     const configToSave = {
