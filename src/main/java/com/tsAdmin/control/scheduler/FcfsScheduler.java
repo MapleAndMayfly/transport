@@ -32,7 +32,7 @@ public class FcfsScheduler extends Scheduler
             for (Car car : CarList.carList.values())
             {
                 // 只分配给无订单的空车
-                if (car.isDemandEmpty() && car.getMaxLoad() >= demand.getQuantity())
+                if (car.getNodeList().isEmpty() && car.getMaxLoad() >= demand.getQuantity())
                 {
                     car.getNodeList().add(new PathNode(demand, true));
                     car.getNodeList().add(new PathNode(demand, false));

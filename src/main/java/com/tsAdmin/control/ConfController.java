@@ -12,7 +12,7 @@ public class ConfController extends Controller
 {
     public void getConfig()
     {
-        JSONObject configs = ConfigLoader.getAllConfigs();
-        renderJson(configs);
+        JSONObject config = ConfigLoader.getFullJson();
+        renderJson(config);
     }
 }

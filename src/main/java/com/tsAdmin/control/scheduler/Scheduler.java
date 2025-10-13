@@ -47,42 +47,49 @@ public abstract class Scheduler
     }
 
     /**
-     * 计算车辆在当前状态下执行某需求的代价
-     * @param car 车辆对象
-     * @param pathNode 带装载状态的需求
-     * @param LoadandTimenow 当前车辆载重和时间数组
+     * 计算车辆在当前状态下前往某地的代价
+     * <p><b><i>注意：该函数会将传入的车辆坐标移动到目的地并根据目的地种类增减载重量</i></b>
+     * @param maxLoad 车辆核载量
+     * @param pathNode 车辆前往的目的地
+     * @param load 当前车辆载重
+     * @param totalTime 路途花费总时间，用于调度器计算总代价，其他情况应为{@code 0}
      * @param carPosition 当前车辆坐标
-     * @return 成本
+     * @return 代价
      */
-    double cost(Car car, PathNode pathNode, Double remainingLoad, Double totalTime, Coordinate carPosition)
+    double cost(int maxLoad, PathNode pathNode, Integer load, Double totalTime, Coordinate carPosition)
     {
         // TODO: 完善代价计算，使其更加合理
-        double distanceWeight = 0.5;    // 距离权重
-        double loadWeight = 0.2;        // 载重权重
-        double waitTimeWeight = 0.3;    // 等待时间权重
-        // double timeoutWeight = 1;    // 超时时间权重
+        double distanceWeight = 0.5;
+        double loadWeight = 0.2;
+        double waitTimeWeight = 0.3;
 
         double distance = 0;
-        double time = distance / 60;
-        double loadCost = (remainingLoad / car.getMaxLoad()) * loadWeight;
+        // 空载代价，载重越高代价越小
+        double loadCost = (1 - (double)load / maxLoad) * loadWeight;
 
-        double timeCost = 0;
         if(pathNode.isOrigin())
         {
             distance = Coordinate.distance(carPosition, pathNode.getDemand().getOrigin());
             carPosition.set(pathNode.getDemand().getOrigin());
-            remainingLoad = Math.max(0, remainingLoad-pathNode.getDemand().getQuantity());
+            load += pathNode.getDemand().getQuantity();
         }
         else
         {
             distance = Coordinate.distance(carPosition, pathNode.getDemand().getDestination());
             carPosition.set(pathNode.getDemand().getDestination());
-            remainingLoad = Math.min(car.getMaxLoad(), remainingLoad+pathNode.getDemand().getQuantity());
+            load -= pathNode.getDemand().getQuantity();
         }
+        double time = distance / 60;
 
+        // 若当前载重大于核载，则将代价设为无穷大
+        if (load > maxLoad) loadCost = Double.POSITIVE_INFINITY;
+
+        // 距离代价，距离越远代价越大
         double distanceCost = distance * distanceWeight;
-        timeCost += pathNode.isOrigin() ? (totalTime + time) * waitTimeWeight : 0;
+        // 接单时间代价，时间越长代价越大
+        double timeCost = pathNode.isOrigin() ? (totalTime + time) * waitTimeWeight : 0;
         totalTime += time;
+
         return distanceCost + loadCost + timeCost;
     }
 
@@ -90,12 +97,12 @@ public abstract class Scheduler
     {
         double totalCost = 0;
         Double totalTime = 0.0;
-        Double remainingLoad = car.getRemainingLoad();
+        Integer load = car.getLoad();
 
         Coordinate carPosition = new Coordinate(car.getPosition());
         for (int i = 0; i < nodeList.size(); i++)
         {
-            double cost = cost(car, nodeList.get(i), remainingLoad, totalTime, carPosition);
+            double cost = cost(car.getMaxLoad(), nodeList.get(i), load, totalTime, carPosition);
             totalCost += cost;
         }
 

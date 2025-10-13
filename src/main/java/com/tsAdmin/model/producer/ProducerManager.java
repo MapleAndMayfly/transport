@@ -8,7 +8,7 @@ import com.tsAdmin.model.Product.ProductType;
 
 public class ProducerManager
 {
-    private static Map<ProductType, String> typeStr = Map.of(
+    private static final Map<ProductType, String> typeStr = Map.of(
         ProductType.PHARMACEUTICAL, "pharmaProducer",
         ProductType.STEEL, "steelProducer",
         ProductType.WOOD, "woodProducer"
@@ -32,22 +32,12 @@ public class ProducerManager
 
     private static Producer factory(ProductType type, String uuid, String name, Coordinate coordinate) 
     {
-        Producer ret = null;
-
-        switch (type) 
+        return switch (type)
         {
-            case WOOD:
-                ret = new WoodProducer(uuid, name, coordinate);
-                break;
-            case STEEL:
-                ret = new SteelProducer(uuid, name, coordinate);
-                break;
-            case PHARMACEUTICAL:
-                ret = new PharmaceuticalProducer(uuid, name, coordinate);
-                break;
-            default:
-                break;
-        }
-        return ret;
+            case WOOD -> new WoodProducer(uuid, name, coordinate);
+            case STEEL -> new SteelProducer(uuid, name, coordinate);
+            case PHARMACEUTICAL -> new PharmaceuticalProducer(uuid, name, coordinate);
+            default -> null;
+        };
     }
 }

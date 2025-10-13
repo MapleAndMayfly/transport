@@ -2,6 +2,10 @@ package com.tsAdmin.model.car;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+import org.w3c.dom.NodeList;
 
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.common.PathNode;
@@ -45,22 +49,30 @@ public class Car
         FREEZE
     }
 
+    private static final Random RANDOM = new Random();
+    private static Map<CarState, Double> freezeChance = Map.of(
+        CarState.AVAILABLE, 0.00,
+        CarState.ORDER_TAKEN, 0.04,
+        CarState.LOADING, 0.02,
+        CarState.TRANSPORTING, 0.04,
+        CarState.UNLOADING, 0.02
+    );
+
     private String uuid;                                // 车辆唯一标识符
-    private int maxLoad, maxVolume;                     // 车辆荷载量
+    private int maxLoad, maxVolume;                     // 车辆核载量
     private int load, volume;                           // 车辆当前载重量
     private CarType carType;                            // 车辆类型
     private Coordinate position;                        // 车辆当前位置
     private List<PathNode> nodeList = new ArrayList<>();// 车辆订单路径列表
-    private CarBehaviour behaviour;                     // 车辆行为
     private CarState currState;                         // 当前车辆状态
     private CarState prevState;                         // 上一车辆状态
     private Timer stateTimer;                           // 状态计时器
-    private Demand currDemand;                          // 目前订单缓存
-    private CarStat carStat;                            // 车辆统计参数
+    private Demand currDemand;                          // 车辆当前执行订单
+    private CarStatistics statistics;                   // 车辆统计参数
 
     /**
      * 车辆的拷贝构造方法
-     * <p><i>拷贝得到的车辆不带有行为类、计时器以及统计数据等数据</i>
+     * <p><i>拷贝得到的车辆不带有计时器以及统计数据等数据</i>
      * @param others 被拷贝的车辆
      */
     public Car(Car others)
@@ -78,21 +90,16 @@ public class Car
         this.maxLoad = maxLoad;
         this.maxVolume = maxVolume;
         this.position = position;
-        this.behaviour = new CarBehaviour(this);
         this.stateTimer = new Timer();
-        this.carStat = new CarStat();
+        this.statistics = new CarStatistics();
     }
 
     // Setter
-    // public void setMaxLoad(int authorizedLoad) { this.maxLoad = authorizedLoad; }
-    // public void setMaxVolume(int volume) { this.maxVolume = volume; }
-    // public void setType(CarType carType) { this.carType = carType; }
     public void setLoad(int load) { this.load = load; }
     public void setVolume(int volume) { this.volume = volume; }
     public void setPosition(Coordinate position) { this.position = position; }
     public void setNodeList(List<PathNode> nodeList) { this.nodeList = nodeList; }
-    public void setCurrDemand(Demand currDemand) { this.currDemand = currDemand; }
-    public void setstateTimer(int time){ this.stateTimer.setTime(time); }
+    public void setCurrDemand(Demand demand) { currDemand = demand; }
     public void setState(CarState newState)
     {
         prevState = currState;
@@ -108,23 +115,106 @@ public class Car
     public int getVolume() { return volume; }
     public Coordinate getPosition() { return position; }
     public List<PathNode> getNodeList() { return nodeList; }
-    public PathNode getFirstNode() { return nodeList.getFirst(); }
-    public Demand getCurrDemand() { return currDemand; }
-    public boolean isDemandEmpty() { return nodeList.isEmpty(); }
     public CarState getState() { return currState; }
     public CarState getPrevState() { return prevState; }
     public Timer getStateTimer() { return stateTimer; }
-    public CarStat getCarStat() { return carStat; }
+    public Demand getCurrDemand() { return currDemand; }
+    public CarStatistics getStatistics() { return statistics; }
     public double getRemainingLoad() { return maxLoad - load; }
     public double getRemainingVolume() { return maxVolume - volume; }
 
-    public boolean isType(CarType carType) { return this.carType == carType; }
-    public void tick()
-    {
-        stateTimer.tick();
-        carStat.setExistTime(carStat.getExistTime() + 30);
-    }
-    public void changeState() { behaviour.changeState(); }
     public void addPathNode(PathNode node) { nodeList.add(node); }
-    public void rmvFirstNode() { nodeList.removeFirst(); }
+
+    /** 获取并移除路径点列表中的第一个点 */
+    public PathNode fetchFirstNode()
+    {
+        PathNode ret = nodeList.getFirst();
+        nodeList.removeFirst();
+        return ret;
+    }
+
+    /** 计时器滴答一次，即向前进一周期 */
+    public void tick() { stateTimer.tick(); }
+
+    /**
+     * 车辆状态机主逻辑，根据当前状态和随机数决定车辆的下一个状态，并处理装卸货、冻结等逻辑
+     */
+    public void changeState()
+    {
+        double randNum = RANDOM.nextDouble();
+        CarState nextState = currState;
+
+        // 非冻结状态有一定几率变为冻结状态，模拟小概率事故的发生，此时当前状态的一切操作被冻结（延后）
+        if (currState != CarState.FREEZE && randNum < freezeChance.get(currState))
+        {
+            nextState = CarState.FREEZE;
+        }
+        else
+        {
+            // 当前状态结束，对车辆属性参数进行对应修改并根据当前状态获取下一状态
+            switch (currState)
+            {
+                case ORDER_TAKEN:
+
+                    position = currDemand.getOrigin();
+                    nextState = CarState.LOADING;
+                    break;
+
+                case LOADING:
+                    load += currDemand.getQuantity();
+                    volume += currDemand.getVolume();
+
+                    nextState = nodeList.getFirst().isOrigin() ? CarState.ORDER_TAKEN : CarState.TRANSPORTING;
+                    currDemand = nodeList.getFirst().getDemand();
+                    break;
+
+                case TRANSPORTING:
+                    position = currDemand.getDestination();
+                    nextState = CarState.UNLOADING;
+                    break;
+
+                case UNLOADING:
+                    load -= currDemand.getQuantity();
+                    volume -= currDemand.getVolume();
+
+                    if (!nodeList.isEmpty())
+                    {
+                        nextState = nodeList.getFirst().isOrigin() ? CarState.ORDER_TAKEN : CarState.TRANSPORTING;
+                        currDemand = nodeList.getFirst().getDemand();
+                    }
+                    else
+                    {
+                        nextState = CarState.AVAILABLE;
+                        currDemand = null;
+                    }
+                    break;
+
+                case FREEZE:
+                    // 当前状态为冻结状态，在转换状态前需要回退状态，根据上一状态进行状态转换
+                    setState(prevState);
+                    changeState();
+                    break;
+
+                case AVAILABLE:
+                    nextState = nodeList.isEmpty() ? CarState.AVAILABLE : CarState.ORDER_TAKEN;
+                default:
+                    break;
+            }
+        }
+
+        setState(nextState);
+        resetTimer();
+    }
+
+    /** 重置当前状态计时器*/
+    private void resetTimer()
+    {
+        int time = switch (currState)
+        {
+            case LOADING, UNLOADING -> (int)(0.01 * currDemand.getQuantity());
+            case FREEZE -> 30;
+            default -> 0;
+        };
+        stateTimer.setTime(time);
+    }
 }

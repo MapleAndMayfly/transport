@@ -9,8 +9,10 @@ public class Timer
     public void setTime(int time) { this.time = time; }
     public int getTime() { return time; }
 
+    /** @return {@code true}如果计时器归零 */
     public boolean timeUp() { return time == 0; }
 
+    /** 计时器滴答一次，即向前进一周期 */
     public void tick()
     {
         time = Math.max(time - Math.max(TICK_SPEED, 0), 0);

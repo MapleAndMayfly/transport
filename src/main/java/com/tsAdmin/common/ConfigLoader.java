@@ -32,28 +32,11 @@ public final class ConfigLoader
 
     private static void loadConfig()
     {
-        try
+        configData = getFullJson().getJSONObject("configs");
+
+        if (configData == null)
         {
-            InputStream inputStream = ConfigLoader.class.getClassLoader().getResourceAsStream(usedConfig);
-            if (inputStream == null)
-            {
-                throw new RuntimeException(usedConfig + " 不存在！");
-            }
-
-            String jsonString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            JSONObject jsonObject = JSON.parseObject(jsonString);
-            configData = jsonObject.getJSONObject("configs");
-
-            if (configData == null)
-            {
-                throw new RuntimeException(usedConfig + " 中缺少 \"configs\" 节点");
-            }
-
-            inputStream.close();
-        }
-        catch (Exception e)
-        {
-            throw new RuntimeException("加载配置文件失败: " + e.getMessage(), e);
+            throw new RuntimeException(usedConfig + " 中缺少 \"configs\" 节点");
         }
     }
 
@@ -149,9 +132,25 @@ public final class ConfigLoader
         return configData.containsKey(key);
     }
 
-    public static JSONObject getAllConfigs()
+    public static JSONObject getFullJson()
     {
-        return configData;
+        try
+        {
+            InputStream inputStream = ConfigLoader.class.getClassLoader().getResourceAsStream(usedConfig);
+            if (inputStream == null)
+            {
+                throw new RuntimeException(usedConfig + " 不存在！");
+            }
+
+            String jsonString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            inputStream.close();
+
+            return JSON.parseObject(jsonString);
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException("加载配置文件失败: " + e.getMessage(), e);
+        }
     }
 }
 

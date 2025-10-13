@@ -26,7 +26,7 @@ import com.tsAdmin.model.car.CarList;
  */
 public class SimulatedAnnealingScheduler extends Scheduler
 {
-    private final Random RANDOM = new Random();
+    private static final Random RANDOM = new Random();
 
     // ========== 模拟退火算法参数 ==========
     private final double MIN_TEMPERATURE = 1.0;        // 最小温度，低于此温度停止迭代

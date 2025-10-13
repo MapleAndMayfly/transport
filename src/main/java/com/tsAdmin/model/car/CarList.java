@@ -28,7 +28,7 @@ public class CarList
     public static void init()
     {
         int carNum = ConfigLoader.getInt("CarList.car_num", 100);
-        /* FIXME: 可改为查看车辆数，以避免车辆不足的情况发生。
+        /* FIXME: 改为查看车辆数，以避免车辆不足的情况发生。
          * 逻辑大致为：若多则只取所需；若少则增加车辆
          * if (DBManager.getCount("car") < carNum) {...} */
         if (DBManager.isTableEmpty("car"))

@@ -8,7 +8,7 @@ import com.tsAdmin.model.Product.ProductType;
 
 public class ProcessorManager
 {
-    private static Map<ProductType, String> typeStr = Map.of(
+    private static final Map<ProductType, String> typeStr = Map.of(
         ProductType.PHARMACEUTICAL, "pharmaProcessor",
         ProductType.STEEL, "steelProcessor",
         ProductType.WOOD, "woodProcessor"
