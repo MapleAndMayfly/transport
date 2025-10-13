@@ -3,61 +3,206 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>地图仪表盘（带车辆弹窗）</title>
+  <title>地图</title>
   <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     html, body { height: 100%; margin: 0; font-family: Arial, sans-serif; overflow: hidden; }
-    .dashboard-container { display: flex; height: 100%; }
-    #container { flex: 3; height: 100%; }
+    
+    .dashboard-container { 
+      display: flex; 
+      height: 100%; 
+      position: relative;
+    }
+    
+    #container { 
+      flex: 1; 
+      height: 100%;
+      transition: all 0.3s ease;
+    }
+    
     .right-panel {
-      flex: 1; min-width: 400px; background: #f5f5f5;
-      padding: 20px; display: flex; flex-direction: column;
-      gap: 20px; box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+      width: 400px;
+      background: #f5f5f5;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+      overflow: hidden;
     }
+    
+    /* 收起状态 */
+    .right-panel.collapsed {
+      width: 0;
+      padding: 0;
+      min-width: 0;
+    }
+    
+    .right-panel.collapsed .panel-content {
+      display: none;
+    }
+    
     .chart-container {
-      background: white; padding: 15px;
-      border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      height: 300px; overflow: hidden;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      height: 300px;
+      overflow: hidden;
     }
+    
     canvas#transportChart {
-      width: 100% !important; height: 100% !important;
+      width: 100% !important;
+      height: 100% !important;
       display: block;
     }
+    
     .params-container {
-      background: white; padding: 15px;
-      border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       overflow-y: auto;
+      flex: 1;
     }
-    .param-table { width: 100%; border-collapse: collapse; }
+    
+    .param-table { 
+      width: 100%; 
+      border-collapse: collapse; 
+    }
+    
     .param-table td {
-      padding: 6px; border-bottom: 1px solid #eee;
+      padding: 6px; 
+      border-bottom: 1px solid #eee;
     }
-    .param-table td:first-child { font-weight: bold; color: #666; }
-    .param-table td:last-child { text-align: right; color: #2c3e50; }
-    .vehicle-list { cursor: pointer; transition: background 0.2s; }
-    .vehicle-list:hover { background-color: #eef; }
+    
+    .param-table td:first-child { 
+      font-weight: bold; 
+      color: #666; 
+    }
+    
+    .param-table td:last-child { 
+      text-align: right; 
+      color: #2c3e50; 
+    }
+    
+    .vehicle-list { 
+      cursor: pointer; 
+      transition: background 0.2s; 
+    }
+    
+    .vehicle-list:hover { 
+      background-color: #eef; 
+    }
+    
     #toggle-chart-type {
-      padding: 6px 12px; font-size: 13px;
-      border: none; background-color: #3498db;
-      color: white; border-radius: 5px; cursor: pointer;
+      padding: 6px 12px;
+      font-size: 13px;
+      border: none;
+      background-color: #3498db;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
     }
+    
     #vehicle-modal {
-      display: none; position: fixed; top: 50%; left: 50%;
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
       transform: translate(-50%, -50%);
-      background: white; border: 1px solid #ccc;
-      border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      z-index: 1000; padding: 20px;
-      min-width: 300px; max-width: 400px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 1000;
+      padding: 20px;
+      min-width: 300px;
+      max-width: 400px;
     }
-    #vehicle-list-wrapper 
-  {
-  height: 30%;
-  min-height: 120px;
-  max-height: 300px;
-  overflow-y: auto;
-  }
+    
+    #vehicle-list-wrapper {
+      height: 200px;
+      overflow-y: auto;
+      margin-bottom: 15px;
+    }
 
+    /* 折叠按钮 */
+    .collapse-btn {
+      position: absolute;
+      right: 400px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 60px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px 0 0 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      transition: all 0.3s ease;
+      z-index: 100;
+      box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+    }
+    
+    .collapse-btn:hover {
+      background: #2980b9;
+      width: 25px;
+    }
+    
+    /* 收起状态下的按钮位置 */
+    .right-panel.collapsed ~ .collapse-btn {
+      right: 0;
+      border-radius: 0 8px 8px 0;
+    }
+    
+    /* 面板内部折叠功能 */
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      cursor: pointer;
+      user-select: none;
+      padding: 5px 0;
+    }
+    
+    .panel-header h3 {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+    
+    .collapse-icon {
+      transition: transform 0.3s ease;
+      font-size: 12px;
+      color: #666;
+      width: 12px;
+      text-align: center;
+    }
+    
+    .panel-content {
+      transition: all 0.3s ease;
+    }
+    
+    .panel-content.collapsed {
+      display: none;
+    }
+    
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 <body>
@@ -78,35 +223,52 @@
   ">打开对比图</button>
 
   <div id="container"></div>
-  <div class="right-panel">
+  
+  <div class="right-panel" id="right-panel">
     <div class="chart-container">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <h3 style="margin: 0;">总代价变化</h3>
+      <div class="chart-header">
+        <h3>总代价变化</h3>
         <button id="toggle-chart-type">切换为折线图</button>
       </div>
       <canvas id="transportChart"></canvas>
     </div>
+    
     <div class="params-container">
-      <h3>车辆列表</h3>
-      <div id="vehicle-list-wrapper">
-        <table class="param-table" id="vehicle-list">
-          <thead>
-            <tr><th>车辆ID</th><th>状态</th><th>运输次数</th><th>位置</th></tr>
-          </thead>
-          <tbody></tbody>
+      <div class="panel-header" id="vehicle-list-header">
+        <h3>
+          <span class="collapse-icon">▼</span>
+          车辆列表
+        </h3>
+      </div>
+      <div class="panel-content" id="vehicle-list-content">
+        <div id="vehicle-list-wrapper">
+          <table class="param-table" id="vehicle-list">
+            <thead>
+              <tr><th>车辆ID</th><th>状态</th><th>运输次数</th><th>位置</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="panel-header" id="metrics-header">
+        <h3>
+          <span class="collapse-icon">▼</span>
+          系统指标
+        </h3>
+      </div>
+      <div class="panel-content" id="metrics-content">
+        <table class="param-table">
+          <tr><td>总运输次数</td><td id="total-transport-count">-</td></tr>
+          <tr><td>总运输重量</td><td id="total-weight-summary">-</td></tr>
+          <tr><td>总空驶里程</td><td id="total-empty-mileage">-</td></tr>
+          <tr><td>平均利用率</td><td id="avg-utilization">-</td></tr>
         </table>
       </div>
-    
-      <h3>系统指标</h3>
-      <table class="param-table">
-        <tr><td>总运输次数</td><td id="total-transport-count">-</td></tr>
-        <tr><td>总运输重量</td><td id="total-weight-summary">-</td></tr>
-        <tr><td>总空驶里程</td><td id="total-empty-mileage">-</td></tr>
-        <tr><td>平均利用率</td><td id="avg-utilization">-</td></tr>
-      </table>
     </div>
-    
   </div>
+  
+  <button class="collapse-btn" id="panel-collapse-btn" title="收起/展开面板">◀</button>
 </div>
 
 <div id="vehicle-modal">
@@ -134,11 +296,13 @@
     totalWeight: 0, wastedWeight: 0, utilization: 0, tripCount: 0
   };
 
-  const chartOptions = {
+  const chartOptions = 
+  {
     responsive: true,
     maintainAspectRatio: false,
     plugins: { legend: { position: 'top' } },
-    scales: {
+    scales: 
+    {
       y: { beginAtZero: true, title: { display: true, text: 'cost' } },
       x: { title: { display: true, text: '周期' } }
     }
@@ -146,11 +310,14 @@
 
   let currentChartType = 'bar';
   const ctx = document.getElementById('transportChart');
-  let chart = new Chart(ctx, {
+  let chart = new Chart(ctx, 
+  {
     type: currentChartType,
-    data: {
+    data: 
+    {
       labels: [],
-      datasets: [{
+      datasets: 
+      [{
         label: '车辆每周期代价变化',
         data: [],
         backgroundColor: 'rgba(52, 152, 219, 0.6)',
@@ -165,21 +332,74 @@
     options: chartOptions
   });
 
-  document.getElementById('toggle-chart-type').addEventListener('click', () => {
+  // 折叠/展开状态
+  let isPanelCollapsed = false;
+  let isVehicleListCollapsed = false;
+  let isMetricsCollapsed = false;
+
+  // 整个右侧面板的折叠
+  document.getElementById('panel-collapse-btn').addEventListener('click', () => 
+  {
+    const rightPanel = document.getElementById('right-panel');
+    const collapseBtn = document.getElementById('panel-collapse-btn');
+    
+    isPanelCollapsed = !isPanelCollapsed;
+    rightPanel.classList.toggle('collapsed', isPanelCollapsed);
+    collapseBtn.textContent = isPanelCollapsed ? '◀' : '▶';
+    collapseBtn.title = isPanelCollapsed ? '展开面板' : '收起面板';
+    
+    // 强制重绘地图
+    setTimeout(() => 
+    {
+      if (window.map) {
+        window.map.resize();
+      }
+    }, 300);
+  });
+
+  // 车辆列表的折叠
+  document.getElementById('vehicle-list-header').addEventListener('click', (e) => 
+  {
+    const content = document.getElementById('vehicle-list-content');
+    const icon = document.querySelector('#vehicle-list-header .collapse-icon');
+    
+    isVehicleListCollapsed = !isVehicleListCollapsed;
+    content.classList.toggle('collapsed', isVehicleListCollapsed);
+    icon.textContent = isVehicleListCollapsed ? '▶' : '▼';
+    icon.style.transform = isVehicleListCollapsed ? 'rotate(-90deg)' : 'none';
+  });
+
+  // 系统指标的折叠
+  document.getElementById('metrics-header').addEventListener('click', (e) => 
+  {
+    const content = document.getElementById('metrics-content');
+    const icon = document.querySelector('#metrics-header .collapse-icon');
+    
+    isMetricsCollapsed = !isMetricsCollapsed;
+    content.classList.toggle('collapsed', isMetricsCollapsed);
+    icon.textContent = isMetricsCollapsed ? '▶' : '▼';
+    icon.style.transform = isMetricsCollapsed ? 'rotate(-90deg)' : 'none';
+  });
+
+  document.getElementById('toggle-chart-type').addEventListener('click', () => 
+  {
     currentChartType = currentChartType === 'bar' ? 'line' : 'bar';
     document.getElementById('toggle-chart-type').textContent =
-      currentChartType === 'bar' ? '切换为折线图' : '切换为柱状图';
+      currentChartType === 'bar' ? '折线图' : '柱状图';
 
     const labels = chart.data.labels;
     const data = chart.data.datasets[0].data;
 
     chart.destroy();
-    chart = new Chart(ctx, {
+    chart = new Chart(ctx, 
+    {
       type: currentChartType,
-      data: {
+      data: 
+      {
         labels: labels,
-        datasets: [{
-          label: '车辆每周期代价变化',
+        datasets: 
+        [{
+          label: '车辆每周期cost变化',
           data: data,
           backgroundColor: 'rgba(52, 152, 219, 0.6)',
           borderColor: '#2980b9',
@@ -196,22 +416,23 @@
 
   let vehicles = [];
 
-  async function fetchDashboardData() {
-    try {
+  async function fetchDashboardData() 
+  {
+    try 
+    {
       let url = new URL('/data/getDashboardData', window.location.origin);
       const res = await fetch(url);
       const { costHistory, carMetrics, labels } = await res.json();
 
+      if (Array.isArray(costHistory) && Array.isArray(labels)) 
+      {
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = costHistory;
+        chart.update();
+      }
 
-      if (Array.isArray(costHistory) && Array.isArray(labels)) {
-  chart.data.labels = labels;
-  chart.data.datasets[0].data = costHistory;
-  chart.update();
-}
-
-
-
-      vehicles = carMetrics.map(c => ({
+      vehicles = carMetrics.map(c => 
+      ({
         UUID: c.UUID,
         status: c.status ?? (Math.random() > 0.5 ? 1 : 0),
         lat: c.lat ?? (30.6 + Math.random() * 0.1),
@@ -222,25 +443,32 @@
       updateVehicleList(vehicles);
       updateSystemMetrics(vehicles);
 
-    } catch (err) {
+    } 
+    catch (err) 
+    {
       console.error('获取仪表盘数据失败:', err);
     }
   }
 
-  function updateVehicleList(vehicleList) {
+  function updateVehicleList(vehicleList) 
+  {
     const tbody = document.querySelector('#vehicle-list tbody');
     tbody.innerHTML = vehicleList.map(v => `
       <tr class="vehicle-list" data-uuid="${v.UUID}">
         <td>${v.UUID}</td>
-        <td>${v.status === "TRANSPORTING" ? '运货行驶' : (v.status==="AVAILABLE"?'空闲':(v.status==="UNLOADING"?'卸货':
-        (v.status==="FREEZE"?'停车等待':(v.status==="LOADING"?'装货':'接单行驶'))))}</td>
+        <td>
+        ${v.status === "TRANSPORTING" ? '运货行驶' : (v.status==="AVAILABLE"?'空闲':(v.status==="UNLOADING"?'卸货':
+        (v.status==="FREEZE"?'停车等待':(v.status==="LOADING"?'装货':'接单行驶'))))}
+        </td>
         <td>${v.metrics.tripCount}</td>
         <td>${v.lat.toFixed(5)}, ${v.lon.toFixed(5)}</td>
       </tr>
     `).join('');
 
-    document.querySelectorAll('.vehicle-list').forEach(row => {
-      row.addEventListener('click', () => {
+    document.querySelectorAll('.vehicle-list').forEach(row => 
+    {
+      row.addEventListener('click', () => 
+      {
         const uuid = row.dataset.uuid;
         const v = vehicles.find(v => v.UUID === uuid);
         if (!v) return;
@@ -266,8 +494,10 @@
     });
   }
 
-  function updateSystemMetrics(vehicleList) {
-    const total = vehicleList.reduce((acc, v) => {
+  function updateSystemMetrics(vehicleList) 
+  {
+    const total = vehicleList.reduce((acc, v) => 
+    {
       const m = v.metrics;
       acc.trip += m.tripCount;
       acc.weight += m.totalWeight;
@@ -276,7 +506,6 @@
       acc.count += 0?m.utilization===0:1;
       return acc;
     }, { trip: 0, weight: 0, empty: 0, util: 0, count: 0 });
-
     document.getElementById('total-transport-count').textContent = total.trip;
     document.getElementById('total-weight-summary').textContent = `${total.weight.toFixed(1)} KG`;
     document.getElementById('total-empty-mileage').textContent = `${total.empty.toFixed(2)} km`;
@@ -286,7 +515,8 @@
   fetchDashboardData();
   setInterval(fetchDashboardData, updateInterval);
 
-  document.getElementById('open-comparison').addEventListener('click', () => {
+  document.getElementById('open-comparison').addEventListener('click', () => 
+  {
     window.open('comparison.html', '_blank');
   });
 </script>
