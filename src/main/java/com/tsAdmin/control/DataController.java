@@ -153,10 +153,10 @@ public class DataController extends Controller
     //     ));
     // }
 
-    private double roundTo3(double d)
-    {
-        return Math.round(d * 1000.0) / 1000.0;
-    }
+    // private double roundTo3(double d)
+    // {
+    //     return Math.round(d * 1000.0) / 1000.0;
+    // }
 
     /**
      * 前端尝试获取特定车辆的下一个目的地时调用，是车辆更新的关键函数

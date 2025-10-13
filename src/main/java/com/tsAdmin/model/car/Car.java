@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import org.w3c.dom.NodeList;
-
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.common.PathNode;
 import com.tsAdmin.common.Timer;
