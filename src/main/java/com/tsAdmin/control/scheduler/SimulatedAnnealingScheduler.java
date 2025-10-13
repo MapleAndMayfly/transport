@@ -127,7 +127,7 @@ private List<Assignment> generateNeighbor(List<Assignment> assignments) {
         List<Assignment> newAssignments = deepCopyAssignments(assignments);
         
         // 随机选择交换方式
-        int swapType = RANDOM.nextInt(3); // 0, 1, 2，分别代表三种交换方式
+        int swapType = RANDOM.nextInt(4); // 0, 1, 2，3分别代表三种交换方式
 
         // ==================== 交换操作：同一订单的起点终点成对交换 ====================
         if (swapType == 0) {
