@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>系统参数配置管理</title>
+    <title>第五人格启动器</title>
     <style>
         * {
             margin: 0;
@@ -319,6 +319,28 @@
             margin-bottom: 15px;
             opacity: 0.5;
         }
+
+        /* 启动按钮的特殊样式 */
+        #start-simulation-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        #start-simulation-btn:hover {
+            background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+        }
+
+        #start-simulation-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
         
         @media (max-width: 768px) {
             .content {
@@ -386,6 +408,9 @@
                     </button>
                     <button class="btn btn-danger" id="delete-preset-btn">
                         <i>🗑️</i> 删除选中预设
+                    </button>
+                    <button class="btn btn-primary" id="start-simulation-btn" style="margin-top: 10px;">
+                        <i>😛</i> 启动仿真系统
                     </button>
                 </div>
             </div>
@@ -471,6 +496,50 @@
                 } catch (error) {
                     console.error('保存配置数据时出错:', error);
                     return { success: false, error: error.message };
+                }
+            },
+            
+            // 启动仿真系统
+            async startSimulation() {
+                try {
+                    const startBtn = document.getElementById('start-simulation-btn');
+                    const originalText = startBtn.innerHTML;
+                    
+                    // // 显示启动中状态
+                    // startBtn.innerHTML = '<i>⏳</i> 启动中...';
+                    // startBtn.disabled = true;
+                    
+                    // 调用启动接口
+                    let url = new URL('/conf/startSimulation', window.location.origin);
+                    const response = await fetch(url);
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            this.showStatus('仿真系统启动成功！正在打开监控界面...', 'success');
+                            
+                            // 延迟一下
+                            setTimeout(() => {
+                                // 打开map页面
+                                window.open('map.html', '_blank');
+                            }, 1000);
+                            
+                        } else {
+                            this.showStatus(`启动失败: ${result.message || '未知错误'}`, 'error');
+                        }
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                } catch (error) {
+                    console.error('启动仿真系统时出错:', error);
+                    this.showStatus(`启动失败: ${error.message}`, 'error');
+                } finally {
+                    // 恢复按钮状态
+                    const startBtn = document.getElementById('start-simulation-btn');
+                    startBtn.innerHTML = '<i>😛</i> 启动仿真系统';
+                    startBtn.disabled = false;
                 }
             },
             
@@ -841,6 +910,11 @@
                 
                 document.getElementById('delete-preset-btn').addEventListener('click', () => {
                     this.deleteSelectedPreset();
+                });
+                
+                // 绑定启动按钮事件
+                document.getElementById('start-simulation-btn').addEventListener('click', () => {
+                    this.startSimulation();
                 });
             }
         };
