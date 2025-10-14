@@ -412,6 +412,9 @@
                     <button class="btn btn-primary" id="start-simulation-btn" style="margin-top: 10px;">
                         <i>😛</i> 启动仿真系统
                     </button>
+                    <button class="btn btn-warning" id="open-sandbox-btn" style="margin-top: 10px;">
+                        <i>🧪</i> 打开数据沙箱
+                    </button>
                 </div>
             </div>
             
@@ -498,63 +501,68 @@
                     return { success: false, error: error.message };
                 }
             },
-            
+
+            //数据沙箱
+            openDataSandbox() {
+            window.open('sandbox.html', '_blank', 'width=1400,height=900,resizable=yes');
+        },
             // 启动仿真系统
            // 启动仿真系统 - 带重试机制
-async startSimulation() {
-    try {
-        const startBtn = document.getElementById('start-simulation-btn');
-        
-        // 显示启动中状态
-        startBtn.innerHTML = '<i>⏳</i> 启动中...';
-        startBtn.disabled = true;
-        
-        let retryCount = 0;
-        const maxRetries = 3;
-        
-        while (retryCount < maxRetries) {
-            try {
-                // 调用启动接口
-                let url = new URL('/conf/startSimulation', window.location.origin);
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    this.showStatus('仿真系统启动成功！正在打开监控界面...', 'success');
+            async startSimulation() 
+            {
+                try {
+                    const startBtn = document.getElementById('start-simulation-btn');
                     
-                    // 延迟一下确保后端完全启动
-                    setTimeout(() => {
-                        window.open('map.html', '_blank');
-                    }, 2000);
-                    return; // 成功则退出
-                } else {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    // 显示启动中状态
+                    startBtn.innerHTML = '<i>⏳</i> 启动中...';
+                    startBtn.disabled = true;
+                    
+                    let retryCount = 0;
+                    const maxRetries = 3;
+                    
+                    while (retryCount < maxRetries) {
+                        try {
+                            // 调用启动接口
+                            let url = new URL('/conf/startSimulation', window.location.origin);
+                            const response = await fetch(url, {
+                                method: 'GET',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            if (response.ok) {
+                                this.showStatus('仿真系统启动成功！正在打开监控界面...', 'success');
+                                
+                                // 延迟一下确保后端完全启动
+                                setTimeout(() => {
+                                    window.open('map.html', '_blank');
+                                }, 2000);
+                                return; // 成功则退出
+                            } else {
+                                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                            }
+                        } catch (retryError) {
+                            retryCount++;
+                            if (retryCount < maxRetries) {
+                                this.showStatus(`启动尝试 ${retryCount}/${maxRetries} 失败，重试中...`, 'error');
+                                await new Promise(resolve => setTimeout(resolve, 1000)); // 等待1秒后重试
+                            } else {
+                                throw retryError; // 重试次数用完，抛出错误
+                            }
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.error('启动仿真系统时出错:', error);
+                    this.showStatus(`启动失败: ${error.message}`, 'error');
+                } finally {
+                    // 恢复按钮状态
+                    const startBtn = document.getElementById('start-simulation-btn');
+                    startBtn.innerHTML = '<i>😛</i> 启动仿真系统';
+                    startBtn.disabled = false;
                 }
-            } catch (retryError) {
-                retryCount++;
-                if (retryCount < maxRetries) {
-                    this.showStatus(`启动尝试 ${retryCount}/${maxRetries} 失败，重试中...`, 'error');
-                    await new Promise(resolve => setTimeout(resolve, 1000)); // 等待1秒后重试
-                } else {
-                    throw retryError; // 重试次数用完，抛出错误
-                }
-            }
-        }
-        
-    } catch (error) {
-        console.error('启动仿真系统时出错:', error);
-        this.showStatus(`启动失败: ${error.message}`, 'error');
-    } finally {
-        // 恢复按钮状态
-        const startBtn = document.getElementById('start-simulation-btn');
-        startBtn.innerHTML = '<i>😛</i> 启动仿真系统';
-        startBtn.disabled = false;
-    }
-},
+            },
             
             // 从表单更新配置对象
             updateConfigFromForm() {
@@ -929,6 +937,11 @@ async startSimulation() {
                 document.getElementById('start-simulation-btn').addEventListener('click', () => {
                     this.startSimulation();
                 });
+
+                //数据沙箱事件添加
+                document.getElementById('open-sandbox-btn').addEventListener('click', () => {
+                    this.openDataSandbox();
+                                });
             }
         };
 
@@ -936,6 +949,7 @@ async startSimulation() {
         document.addEventListener('DOMContentLoaded', () => {
             configManager.init();
         });
+
     </script>
 </body>
 </html>
