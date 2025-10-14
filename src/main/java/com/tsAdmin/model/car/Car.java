@@ -8,6 +8,7 @@ import java.util.Random;
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.common.PathNode;
 import com.tsAdmin.common.Timer;
+import com.tsAdmin.control.scheduler.Scheduler;
 import com.tsAdmin.model.Demand;
 
 /** 车辆 */
@@ -131,8 +132,13 @@ public class Car
         return ret;
     }
 
-    /** 计时器滴答一次，即向前进一周期 */
-    public void tick() { stateTimer.tick(); }
+    /** 计时器滴答一次，即向前进一周期 并记录时间*/
+    public void tick(CarState currState) 
+    { 
+        if(currState == CarState.FREEZE || currState == CarState.AVAILABLE) statistics.plusIdleTime(Timer.TICK_SPEED);
+        else statistics.plusBusyTime(Timer.TICK_SPEED);
+        stateTimer.tick(); 
+    }
 
     /**
      * 车辆状态机主逻辑，根据当前状态和随机数决定车辆的下一个状态，并处理装卸货、冻结等逻辑
@@ -153,7 +159,9 @@ public class Car
             switch (currState)
             {
                 case ORDER_TAKEN:
-
+                    double distance=Coordinate.distance(position,currDemand.getOrigin());
+                    statistics.plusTotalDistance(distance);
+                    if(load==0){ statistics.plusEmptyDistance(distance); }
                     position = currDemand.getOrigin();
                     nextState = CarState.LOADING;
                     break;
@@ -164,14 +172,20 @@ public class Car
 
                     nextState = nodeList.getFirst().isOrigin() ? CarState.ORDER_TAKEN : CarState.TRANSPORTING;
                     currDemand = nodeList.getFirst().getDemand();
+                    statistics.setCost(Scheduler.cost(maxLoad, nodeList.getFirst(), load, 0d, position));
+                    statistics.plusTotalCost(statistics.getCost());
                     break;
 
                 case TRANSPORTING:
+                    statistics.plusTotalDistance(Coordinate.distance(position,currDemand.getDestination()));
+                    statistics.plusAccWastedLoad(maxLoad-load);
                     position = currDemand.getDestination();
                     nextState = CarState.UNLOADING;
                     break;
 
                 case UNLOADING:
+                    statistics.plusCompleteCount();
+                    statistics.plusTotalWeight(currDemand.getQuantity());
                     load -= currDemand.getQuantity();
                     volume -= currDemand.getVolume();
 
@@ -179,6 +193,8 @@ public class Car
                     {
                         nextState = nodeList.getFirst().isOrigin() ? CarState.ORDER_TAKEN : CarState.TRANSPORTING;
                         currDemand = nodeList.getFirst().getDemand();
+                        statistics.setCost(Scheduler.cost(maxLoad, nodeList.getFirst(), load, 0d, position));
+                        statistics.plusTotalCost(statistics.getCost());
                     }
                     else
                     {
@@ -191,10 +207,16 @@ public class Car
                     // 当前状态为冻结状态，在转换状态前需要回退状态，根据上一状态进行状态转换
                     setState(prevState);
                     changeState();
-                    break;
+                    return;
 
                 case AVAILABLE:
                     nextState = nodeList.isEmpty() ? CarState.AVAILABLE : CarState.ORDER_TAKEN;
+                    if(nextState==CarState.ORDER_TAKEN)
+                    { 
+                        currDemand= nodeList.getFirst().getDemand();
+                        statistics.setCost(Scheduler.cost(maxLoad, nodeList.getFirst(), load, 0d, position)); 
+                        statistics.plusTotalCost(statistics.getCost());
+                    }
                 default:
                     break;
             }
