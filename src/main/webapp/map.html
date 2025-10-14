@@ -203,24 +203,59 @@
       align-items: center;
       margin-bottom: 8px;
     }
+
+    /* 底部按钮容器 */
+    .bottom-buttons {
+      position: fixed;
+      left: 20px;
+      bottom: 20px;
+      z-index: 999;
+      display: flex;
+      gap: 10px;
+    }
+
+    .bottom-btn {
+      padding: 10px 16px;
+      color: white;
+      font-size: 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      transition: background 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .comparison-btn {
+      background-color: #27ae60;
+    }
+
+    .comparison-btn:hover {
+      background-color: #219653;
+    }
+
+    .config-btn {
+      background-color: #e67e22;
+    }
+
+    .config-btn:hover {
+      background-color: #d35400;
+    }
   </style>
 </head>
 <body>
 <div class="dashboard-container">
-  <button id="open-comparison" style="
-    position: fixed;
-    left: 20px;
-    bottom: 20px;
-    z-index: 999;
-    padding: 10px 16px;
-    background-color: #27ae60;
-    color: white;
-    font-size: 14px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-  ">打开对比图</button>
+  <!-- 底部按钮容器 -->
+  <div class="bottom-buttons">
+    <button id="open-comparison" class="bottom-btn comparison-btn">
+      📊 打开对比图
+    </button>
+    <!-- <button id="open-config" class="bottom-btn config-btn">
+      ⚙️ 系统配置
+    </button> -->
+  </div>
 
   <div id="container"></div>
   
@@ -515,10 +550,31 @@
   fetchDashboardData();
   setInterval(fetchDashboardData, updateInterval);
 
+  // 打开对比图按钮
   document.getElementById('open-comparison').addEventListener('click', () => 
   {
     window.open('comparison.html', '_blank');
   });
+
+  // 打开系统配置按钮
+  // document.getElementById('open-config').addEventListener('click', () => 
+  // {
+  //   window.open('config.html', '_blank');
+  // });
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

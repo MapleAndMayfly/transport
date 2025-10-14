@@ -1,6 +1,7 @@
 package com.tsAdmin.control;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,33 +39,42 @@ public class DataController extends Controller
     {
         // XXX: 这里看胡少怎么写，如果一次性获取所有就在后端遍历车辆for (Car car : CarList.carList)，返回ArrayList<Map<String, String>>
         // XXX: 如果一辆辆获取，前端遍历的话就根据uuid获取车辆uuid = getPara("UUID"); car = CarList.carList.get(uuid)，返回Map<String, String>
-        Car car = new Car(null);    // FIXME: temp code
-        CarStatistics statistics = car.getStatistics();
-        Map<String, String> data = new HashMap<>();
-
-        try
+        List<Map<String,String>> realdata = new ArrayList<>();
+        Double cost=0d;//该周期内cost
+        for(Car car : CarList.carList.values())
         {
-            // 获取 CarStatistics 类的所有 Getter
-            Method[] methods = CarStatistics.class.getMethods();
-            for (Method method : methods)
+            CarStatistics statistics = car.getStatistics();
+            Map<String, String> data = new HashMap<>();
+            data.put("UUID", car.getUUID());
+            cost += statistics.getCost();
+            try
             {
-                if (method.getName().startsWith("get"))
+                // 获取 CarStatistics 类的所有 Getter
+                Method[] methods = CarStatistics.class.getMethods();
+                for (Method method : methods)
                 {
-                    // 去掉 get 前缀，首字母小写
-                    String methodName = method.getName();
-                    String varName = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
+                    if (method.getName().startsWith("get"))
+                    {
+                        // 去掉 get 前缀，首字母小写
+                        String methodName = method.getName();
+                        String varName = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
 
-                    // 调用 Getter 方法获取值并转换为字符串
-                    Object value = method.invoke(statistics);
-                    data.put(varName, String.valueOf(value));
+                        // 调用 Getter 方法获取值并转换为字符串
+                        Object value = method.invoke(statistics);
+                        data.put(varName, String.valueOf(value));
+                    }
                 }
+                realdata.add(data);
+            }
+            catch (Exception e)
+            {
+                System.err.println("获取统计数据失败: " + e.getMessage());
             }
         }
-        catch (Exception e)
-        {
-            System.err.println("获取统计数据失败: " + e.getMessage());
-        }
-        renderJson(JsonKit.toJson(data));
+
+        Map<Double,List<Map<String,String>>> finaldata = new HashMap<>();
+        finaldata.put(cost, realdata);
+        renderJson(JsonKit.toJson(finaldata));
     }
 
     // XXX: 比较页面的可以先不整，先把仪表盘整出来
@@ -168,7 +178,7 @@ public class DataController extends Controller
         Map<String, Double> dest = null;
 
         // 车辆计时器滴答一次并在计时器归零时进行车辆状态转换
-        car.tick();
+        car.tick(car.getState());
         if(car.getStateTimer().timeUp()) car.changeState();
 
         // 仅在车辆进入了接单行驶/运货行驶状态时给dest赋值，其他状态返回的dest为null

@@ -220,7 +220,7 @@ async function updateCars() {
             const uuid = car.UUID;
             if (car.status === 0) 
             {
-                const recivdata = await sendPara(uuid);
+                const recivdata = await sendPara(uuid,0,0);
                 console.log(`车辆 ${uuid} 收到目的地:`, recivdata);
 
                 // 校验目的地格式和合法性
@@ -292,13 +292,15 @@ async function VideoCars(marker, route)
     console.log("路径跳点完成");
 }
 
-async function sendPara(uuid) 
+async function sendPara(uuid,distance,time) 
 {
     console.log("已调用sendPara");
     try {
         // 构造包含 UUID 
         let url = new URL('/data/getDestination', window.location.origin);
         url.searchParams.append("UUID", uuid);
+        url.searchParams.append("Distance", distance);
+        url.searchParams.append("Time", time);
         const response = await fetch(url);
         let data = await response.json();
         console.log("后端响应:",data);
@@ -413,11 +415,13 @@ async function cartransporting(routeInfo,carUUID)
         {
             // 恢复车辆空闲状态
             cars[carIndex].status = 0;
+            let distance=routeInfo.route.distance;
+            let time=routeInfo.route.time;
             // 清理路线相关元素
             map.remove(routeInfo.startMarker);
             map.remove(routeInfo.endMarker);
             map.remove(routeInfo.route);
-           const nousedc=await sendPara(carUUID);
+           const nousedc=await sendPara(carUUID,distance,time);
             console.log(`车辆 ${carUUID} 已完成运输`);
         }
           }
