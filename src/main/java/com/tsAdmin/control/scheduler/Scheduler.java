@@ -56,7 +56,7 @@ public abstract class Scheduler
      * @param carPosition 当前车辆坐标
      * @return 代价
      */
-    double cost(int maxLoad, PathNode pathNode, Integer load, Double totalTime, Coordinate carPosition)
+    public static double cost(int maxLoad, PathNode pathNode, Integer load, Double totalTime, Coordinate carPosition)
     {
         // TODO: 完善代价计算，使其更加合理
         double distanceWeight = 0.5;
