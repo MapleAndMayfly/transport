@@ -116,7 +116,7 @@ async function initCar()//生成车辆
 
     data.forEach(car => {
         const marker = new AMap.Marker({
-            position: new AMap.LngLat(car.lon, car.lat),
+            position: new AMap.LngLat(car.location_lon, car.location_lat),
             icon: carIcon,
             map: map
         });
@@ -186,12 +186,12 @@ async function getCarData()//后端车辆坐标获取
         let data = await response.json();
         if (!Array.isArray(data)) throw new Error('车辆数据无效', { cause: data+'无效' });
 
-        data.forEach(item => {
-            let isValid = item.hasOwnProperty("UUID")
-                    && item.hasOwnProperty("lat")
-                    && item.hasOwnProperty("lon");
-            if (!isValid) throw new Error('车辆数据解析失败', { cause: item+'解析出错' });
-        });
+        // data.forEach(item => {
+        //     let isValid = item.hasOwnProperty("UUID")
+        //             && item.hasOwnProperty("lat")
+        //             && item.hasOwnProperty("lon");
+        //     if (!isValid) throw new Error('车辆数据解析失败', { cause: item+'解析出错' });
+        // });
         return data;
     }
     catch (error)
