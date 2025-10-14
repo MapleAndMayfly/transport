@@ -27,7 +27,7 @@ public class Main
         JFinal.start("src/main/webapp", port, "/", updateInterval);
     }
 
-    public static void init()
+    public static void start()
     {
         CarList.init();
         DemandList.init();

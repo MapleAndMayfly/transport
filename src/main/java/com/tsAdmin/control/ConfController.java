@@ -10,9 +10,30 @@ import com.tsAdmin.common.ConfigLoader;
  */
 public class ConfController extends Controller
 {
-    public void getConfig()
+    public void getDefaultConfig()
     {
+        ConfigLoader.use("config.json");
         JSONObject config = ConfigLoader.getFullJson();
         renderJson(config);
+    }
+
+    public void getAllPresets()
+    {
+        renderJson(DBManager.getAllPresets());
+    }
+
+    public void applyPreset()
+    {
+        String name = getPara("name");
+        ConfigLoader.use(name);
+        ConfigLoader.loadConfig();
+    }
+
+    public void startSimulation() { Main.start(); }
+
+    public void savePreset()
+    {
+        String fullJson = getPara("fullJson");
+        DBManager.savePreset(fullJson);
     }
 }

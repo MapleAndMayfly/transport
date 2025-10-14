@@ -1,5 +1,7 @@
 package com.tsAdmin.common;
 
+import com.tsAdmin.control.DBManager;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 
@@ -30,7 +32,7 @@ public final class ConfigLoader
         loadConfig();
     }
 
-    private static void loadConfig()
+    public static void loadConfig()
     {
         configData = getFullJson().getJSONObject("configs");
 
@@ -136,14 +138,22 @@ public final class ConfigLoader
     {
         try
         {
-            InputStream inputStream = ConfigLoader.class.getClassLoader().getResourceAsStream(usedConfig);
-            if (inputStream == null)
+            String jsonString = "";
+            if (usedConfig == "config.json")
             {
-                throw new RuntimeException(usedConfig + " 不存在！");
-            }
+                InputStream inputStream = ConfigLoader.class.getClassLoader().getResourceAsStream(usedConfig);
+                if (inputStream == null)
+                {
+                    throw new RuntimeException(usedConfig + " 不存在！");
+                }
 
-            String jsonString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            inputStream.close();
+                jsonString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                inputStream.close();
+            }
+            else
+            {
+                jsonString = DBManager.getPreset(usedConfig);
+            }
 
             return JSON.parseObject(jsonString);
         }

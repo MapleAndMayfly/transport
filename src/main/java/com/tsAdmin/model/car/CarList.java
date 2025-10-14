@@ -65,7 +65,7 @@ public class CarList
             }
         }
 
-        List<Map<String, String>> records = DBManager.getCars();
+        List<Map<String, String>> records = DBManager.getCarData();
         for (Map<String, String> record : records)
         {
             String uuid = record.get("UUID");

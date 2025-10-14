@@ -6,7 +6,7 @@ public class IndexController extends Controller
 {
     public void index()
     {
-        Main.init();
+        Main.start();
         render("index.html");
     }
 }

@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.jfinal.plugin.activerecord.Record;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.jfinal.plugin.activerecord.Db;
 import com.tsAdmin.model.Demand;
 import com.tsAdmin.model.car.Car;
@@ -19,6 +21,49 @@ public class DBManager
         "steelProcessor", "steel_processor",
         "woodProcessor", "wood_processor"
     );
+
+    /**
+     * 判断数据表是否为空
+     * @param tableName 数据表名
+     * @return {@code true} 如果查询出错（如表格不存在）或表格为空
+     */
+    public static boolean isTableEmpty(String tableName) { return getCount(tableName) <= 0; }
+
+    public static long getCount(String tableName)
+    {
+        try
+        {
+            String sql = "SELECT COUNT(*) AS count FROM " + tableName;
+            Record record = Db.findFirst(sql);
+            if (record == null)
+            {
+                throw new RuntimeException("Query failed");
+            }
+            return record.getLong("count");
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+    public static Map<String, String> getRandPoi(String type)
+    {
+        String table = POI_TABLES.get(type);
+        if (table == null) throw new IllegalArgumentException("Invalid table type: " + type);
+
+        String sql = "SELECT location_ID, name, location_lat, location_lon FROM " + table + " ORDER BY RAND() LIMIT 1";
+        Record rawData = Db.findFirst(sql);
+
+        Map<String, String> POIData = Map.of(
+            "UUID", rawData.get("location_ID"),
+            "name", rawData.get("name"),
+            "lat", rawData.get("location_lat").toString(),
+            "lon", rawData.get("location_lon").toString()
+        );
+        return POIData;
+    }
 
     /**
      * 获取POI数据列表
@@ -51,79 +96,7 @@ public class DBManager
         return poiData;
     }
 
-    /**
-     * 获取车辆数据列表
-     * @return 所有车辆数据的列表，每一条数据包含id, location_lat, location_lon
-     */
-    public static List<Map<String, String>> getCarData()
-    {
-        List<Map<String, String>> carData = new ArrayList<>();
-
-        String sql = "SELECT UUID, location_lat, location_lon FROM car";
-        List<Record> rawData = Db.find(sql);
-
-        if (rawData != null && !rawData.isEmpty())
-        {
-            for (Record record : rawData)
-            {
-                Map<String, String> element = Map.of(
-                    "UUID", record.get("UUID"),
-                    "lat", record.get("location_lat").toString(),
-                    "lon", record.get("location_lon").toString()
-                );
-                carData.add(element);
-            }
-        }
-        return carData;
-    }
-
-    public static Map<String, String> getRandPoi(String type)
-    {
-        String table = POI_TABLES.get(type);
-        if (table == null) throw new IllegalArgumentException("Invalid table type: " + type);
-
-        String sql = "SELECT location_ID, name, location_lat, location_lon FROM " + table + " ORDER BY RAND() LIMIT 1";
-        Record rawData = Db.findFirst(sql);
-
-        Map<String, String> POIData = Map.of(
-            "UUID", rawData.get("location_ID"),
-            "name", rawData.get("name"),
-            "lat", rawData.get("location_lat").toString(),
-            "lon", rawData.get("location_lon").toString()
-        );
-        return POIData;
-    }
-
-    public static long getCount(String tableName)
-    {
-        try
-        {
-            String sql = "SELECT COUNT(*) AS count FROM " + tableName;
-            Record record = Db.findFirst(sql);
-            if (record == null)
-            {
-                throw new RuntimeException("Query failed");
-            }
-            return record.getLong("count");
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-            return -1;
-        }
-    }
-
-    /**
-     * 判断数据表是否为空
-     * @param tableName 数据表名
-     * @return {@code true} 如果查询出错（如表格不存在）或表格为空
-     */
-    public static boolean isTableEmpty(String tableName)
-    {
-        return getCount(tableName) <= 0;
-    }
-
-    public static List<Map<String, String>> getDemands()
+    public static List<Map<String, String>> getDemandData()
     {
         List<Map<String, String>> demandData = new ArrayList<>();
         
@@ -158,7 +131,7 @@ public class DBManager
         return demandData;
     }
 
-    public static List<Map<String, String>> getCars()
+    public static List<Map<String, String>> getCarData()
     {
         List<Map<String, String>> carData = new ArrayList<>();
         
@@ -187,8 +160,62 @@ public class DBManager
         {
             e.printStackTrace();
         }
-        
+
         return carData;
+    }
+
+    public static String getPreset(String name)
+    {
+        String sql = "SELECT content FROM preset WHERE name = ? LIMIT 1";
+        String jsonString = Db.find(sql, name).toString();
+        return jsonString;
+    }
+
+    public static List<String> getAllPresets()
+    {
+        List<String> presets = new ArrayList<>();
+        try
+        {
+            String sql = "SELECT content FROM preset ORDER BY name";
+            List<Record> raws = Db.find(sql);
+            if (raws != null && !raws.isEmpty())
+            {
+                for (Record r : raws)
+                {
+                    String content = r.getStr("content");
+                    if (content != null)
+                    {
+                        presets.add(content);
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        return presets;
+    }
+
+    public static void savePreset(String fullString)
+    {
+        JSONObject json = JSON.parseObject(fullString);
+        // 若json结构不合法，则将名字置为Default
+        String name = json != null && json.getString("name") != null ? json.getString("name") : "Illegal";
+        String sql = "SELECT content FROM preset WHERE name = ? LIMIT 1";
+        Record exist = Db.findFirst(sql, name);
+        if (exist != null)
+        {
+            String updateSql = "UPDATE preset SET content = ? WHERE name = ?";
+            Db.update(updateSql, fullString, name);
+        }
+        else
+        {
+            Record presetRecord = new Record();
+            presetRecord.set("name", name)
+                        .set("content", fullString);
+            Db.save("preset", presetRecord);
+        }
     }
 
     /**

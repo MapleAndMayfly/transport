@@ -21,7 +21,7 @@ public class DemandList
     {
         if (!DBManager.isTableEmpty("demand"))
         {
-            List<Map<String, String>> records = DBManager.getDemands();
+            List<Map<String, String>> records = DBManager.getDemandData();
             for (Map<String, String> record : records)
             {
                 String uuid = record.get("UUID");
