@@ -159,7 +159,7 @@ public class Car
             switch (currState)
             {
                 case ORDER_TAKEN:
-                    double distance=Coordinate.distance(position,currDemand.getOrigin());
+                    double distance = Coordinate.distance(position,currDemand.getOrigin());
                     statistics.plusTotalDistance(distance);
                     if(load==0){ statistics.plusEmptyDistance(distance); }
                     position = currDemand.getOrigin();

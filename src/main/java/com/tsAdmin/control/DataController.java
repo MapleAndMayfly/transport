@@ -40,13 +40,13 @@ public class DataController extends Controller
         // XXX: 这里看胡少怎么写，如果一次性获取所有就在后端遍历车辆for (Car car : CarList.carList)，返回ArrayList<Map<String, String>>
         // XXX: 如果一辆辆获取，前端遍历的话就根据uuid获取车辆uuid = getPara("UUID"); car = CarList.carList.get(uuid)，返回Map<String, String>
         List<Map<String,String>> realdata = new ArrayList<>();
-        Double cost=0d;//该周期内cost
+        Double cycleCost = 0d;//该周期内cost
         for(Car car : CarList.carList.values())
         {
             CarStatistics statistics = car.getStatistics();
             Map<String, String> data = new HashMap<>();
             data.put("UUID", car.getUUID());
-            cost += statistics.getCost();
+            cycleCost += statistics.getCost();
             try
             {
                 // 获取 CarStatistics 类的所有 Getter
@@ -73,7 +73,7 @@ public class DataController extends Controller
         }
 
         Map<Double,List<Map<String,String>>> finaldata = new HashMap<>();
-        finaldata.put(cost, realdata);
+        finaldata.put(cycleCost, realdata);
         renderJson(JsonKit.toJson(finaldata));
     }
 
