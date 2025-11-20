@@ -166,57 +166,114 @@ public class DBManager
 
     public static String getPreset(String name)
     {
-        String sql = "SELECT content FROM preset WHERE name = ? LIMIT 1";
-        String jsonString = Db.find(sql, name).toString();
-        return jsonString;
+        try 
+        {
+            String sql = "SELECT content FROM preset WHERE name = ? LIMIT 1";
+            List<Record> records = Db.find(sql, name);
+        
+        if (records != null && !records.isEmpty()) 
+            {
+                String content = records.get(0).getStr("content");
+                System.out.println("获取预设内容 - 名称: " + name + ", 内容长度: " + (content != null ? content.length() : 0));
+                return content;
+            } else 
+            {
+                System.out.println("未找到预设: " + name);
+                return null;
+            }
+        } catch (Exception e) 
+        {
+            System.err.println("获取预设异常: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
-    public static List<String> getAllPresets()
+    public static List<String> getAllPresets() 
     {
         List<String> presets = new ArrayList<>();
-        try
+        
+        try 
         {
-            String sql = "SELECT content FROM preset ORDER BY name";
+            String sql = "SELECT name, content FROM preset ORDER BY name";
             List<Record> raws = Db.find(sql);
-            if (raws != null && !raws.isEmpty())
+            System.out.println("从数据库获取的预设记录数: " + (raws != null ? raws.size() : 0));
+            
+            if (raws != null && !raws.isEmpty()) 
             {
-                for (Record r : raws)
+                for (Record r : raws) 
                 {
+                    String name = r.getStr("name");
                     String content = r.getStr("content");
-                    if (content != null)
+                    System.out.println("预设 - 名称: " + name + ", 内容长度: " + (content != null ? content.length() : 0));
+                    
+                    if (content != null) 
                     {
+                        // 这里直接返回内容字符串，而不是 Record 的字符串表示
                         presets.add(content);
                     }
                 }
+            } else 
+            {
+                System.out.println("数据库中没有找到预设记录");
             }
-        }
-        catch (Exception e)
+        } catch (Exception e) 
         {
+            System.err.println("获取预设列表异常: " + e.getMessage());
             e.printStackTrace();
         }
         return presets;
     }
 
-    public static void savePreset(String fullString)
-    {
+   public static void savePreset(String fullString)
+{
+    try {
+        System.out.println("接收到的预设数据: " + fullString);
+        
         JSONObject json = JSON.parseObject(fullString);
-        // 若json结构不合法，则将名字置为Default
-        String name = json != null && json.getString("name") != null ? json.getString("name") : "Illegal";
+        if (json == null) {
+            System.err.println("JSON 解析失败: " + fullString);
+            return;
+        }
+        
+        // 获取预设名称，如果不存在则使用默认名称
+        String name = json.getString("name");
+        if (name == null || name.trim().isEmpty()) {
+            name = "Unnamed_Preset_" + System.currentTimeMillis();
+            System.out.println("使用默认名称: " + name);
+        }
+        
+        System.out.println("保存预设: " + name);
+        
+        // 检查预设是否已存在
         String sql = "SELECT content FROM preset WHERE name = ? LIMIT 1";
         Record exist = Db.findFirst(sql, name);
+        
         if (exist != null)
         {
+            // 更新已存在的预设
             String updateSql = "UPDATE preset SET content = ? WHERE name = ?";
-            Db.update(updateSql, fullString, name);
+            int updated = Db.update(updateSql, fullString, name);
+            System.out.println("更新预设结果: " + updated);
         }
         else
         {
+            // 插入新预设
             Record presetRecord = new Record();
             presetRecord.set("name", name)
                         .set("content", fullString);
-            Db.save("preset", presetRecord);
+            boolean saved = Db.save("preset", presetRecord);
+            System.out.println("保存新预设结果: " + saved);
         }
+        
+        System.out.println("预设保存完成: " + name);
+        
+    } catch (Exception e) {
+        System.err.println("保存预设时发生错误: " + e.getMessage());
+        e.printStackTrace();
+        throw new RuntimeException("保存预设失败", e);
     }
+}
 
     /**
      * 保存订单到数据库
