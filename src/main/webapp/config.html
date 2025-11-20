@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第五人格启动器</title>
+    <title>系统配置管理</title>
     <style>
         * {
             margin: 0;
@@ -415,6 +415,9 @@
                     <button class="btn btn-warning" id="open-sandbox-btn" style="margin-top: 10px;">
                         <i>🧪</i> 打开数据沙箱
                     </button>
+                    <!-- <button class="btn btn-outline" id="refresh-presets-btn" style="margin-top: 10px;">
+                        <i></i> 刷新预设列表
+                    </button> -->
                 </div>
             </div>
             
@@ -439,7 +442,7 @@
             },
             
             presets: [],
-            selectedPresetId: null,
+            selectedPreset: null,
             saveTimeout: null,
             
             // 获取配置数据
@@ -447,7 +450,10 @@
                 console.log("已调用 fetchCurrentConfig");
                 try {
                     let url = new URL('/conf/getDefaultConfig', window.location.origin);
-                    const response = await fetch(url);
+                    const response = await fetch(url, { method: 'GET' });
+                    
+                    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    
                     let data = await response.json();
                     console.log("后端响应:", data);
                     
@@ -461,134 +467,249 @@
                 }
             },
             
-            // 保存配置到后端 - 确保键名也被保存
-            async saveConfigToBackend() {
-                console.log("已调用 saveConfigToBackend");
-                try {
-                    let url = new URL('/conf/applyPreset', window.location.origin);
-                    
-                    // 构建包含键名的完整配置对象
-                    const configToSave = {
-                        name: this.currentConfig.name,
-                        configs: {}
-                    };
-                    
-                    // 确保键名也被保存
-                    for (const key in this.currentConfig.configs) {
-                        configToSave.configs[key] = {
-                            name: this.currentConfig.configs[key].name,
-                            unit: this.currentConfig.configs[key].unit,
-                            value: this.currentConfig.configs[key].value
-                        };
-                    }
-                    
-                    const configJSON = JSON.stringify(configToSave);
-                    url.searchParams.append("config", configJSON);
-                    
-                    console.log("发送到后端的完整配置:", configToSave);
-                    
-                    const response = await fetch(url);
-                    let data = await response.json();
-                    console.log("后端响应:", data);
-                    
-                    if (data.success) {
-                        return { success: true, message: '配置保存成功！' };
-                    } else {
-                        return { success: false, error: data.error };
-                    }
-                } catch (error) {
-                    console.error('保存配置数据时出错:', error);
-                    return { success: false, error: error.message };
-                }
-            },
+            // 获取所有预设
+            async fetchAllPresets() {
+    try {
+        let url = new URL('/conf/getAllPresets', window.location.origin);
+        const response = await fetch(url, { method: 'GET' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
-            //数据沙箱
-            openDataSandbox() {
-            window.open('sandbox.html', '_blank', 'width=1400,height=900,resizable=yes');
-        },
+        const data = await response.json();
+        console.log("获取到的预设列表原始数据:", data);
+        
+        // 解析预设数据
+        this.presets = data.map(item => {
+            if (typeof item === 'string') {
+                try {
+                    const parsed = JSON.parse(item);
+                    console.log("解析后的预设:", parsed);
+                    return parsed;
+                } catch (e) {
+                    console.warn('解析预设失败:', item, e);
+                    return { name: '解析失败', description: '', configs: {} };
+                }
+            }
+            console.log("直接使用的预设对象:", item);
+            return item;
+        });
+        
+        console.log("最终预设列表:", this.presets);
+        this.renderPresetList();
+    } catch (error) {
+        console.error('获取预设列表失败:', error);
+        this.showStatus('获取预设列表失败: ' + error.message, 'error');
+    }
+},
+    
+            // 保存配置到后端
+           // 前端修改：发送 POST 请求并传递 JSON 数据
+async saveConfigToBackend() {
+    try {
+        let url = new URL('/conf/savePreset', window.location.origin);
+        const configToSave = {
+            name: this.currentConfig.name,
+            configs: this.currentConfig.configs
+        };
+        const fullJson = JSON.stringify(configToSave);
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: fullJson
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        console.log("保存成功");
+        return { success: true, message: '配置保存成功！' };
+    } catch (error) {
+        console.error('保存配置数据时出错:', error);
+        return { success: false, error: error.message };
+    }
+},
+
+    
+            // 应用预设
+            async applyPreset(presetName) {
+    try {
+        // 先调用后端获取预设内容
+        let url = new URL('/conf/applyPreset', window.location.origin);
+        url.searchParams.append("name", presetName);
+        const response = await fetch(url, { method: 'GET' });
+        
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        
+        const preset = await response.json();
+        
+        // 更新当前配置为预设内容
+        if (preset.configs) {
+            this.currentConfig.configs = JSON.parse(JSON.stringify(preset.configs));
+        }
+        this.currentConfig.name = presetName;
+
+        this.renderConfigForm();
+        this.showStatus(`已应用预设 "${presetName}"`, 'success');
+    } catch (error) {
+        console.error('应用预设失败:', error);
+        this.showStatus(`应用预设失败: ${error.message}`, 'error');
+    }
+},
+    
             // 启动仿真系统
-           // 启动仿真系统 - 带重试机制
-            async startSimulation() 
-            {
+            async startSimulation() {
                 try {
                     const startBtn = document.getElementById('start-simulation-btn');
-                    
-                    // 显示启动中状态
                     startBtn.innerHTML = '<i>⏳</i> 启动中...';
                     startBtn.disabled = true;
-                    
-                    let retryCount = 0;
-                    const maxRetries = 3;
-                    
-                    while (retryCount < maxRetries) {
-                        try {
-                            // 调用启动接口
-                            let url = new URL('/conf/startSimulation', window.location.origin);
-                            const response = await fetch(url, {
-                                method: 'GET',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                }
-                            });
-                            
-                            if (response.ok) {
-                                this.showStatus('仿真系统启动成功！正在打开监控界面...', 'success');
-                                
-                                // 延迟一下确保后端完全启动
-                                setTimeout(() => {
-                                    window.open('map.html', '_blank');
-                                }, 2000);
-                                return; // 成功则退出
-                            } else {
-                                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                            }
-                        } catch (retryError) {
-                            retryCount++;
-                            if (retryCount < maxRetries) {
-                                this.showStatus(`启动尝试 ${retryCount}/${maxRetries} 失败，重试中...`, 'error');
-                                await new Promise(resolve => setTimeout(resolve, 1000)); // 等待1秒后重试
-                            } else {
-                                throw retryError; // 重试次数用完，抛出错误
-                            }
-                        }
+    
+                    let url = new URL('/conf/startSimulation', window.location.origin);
+                    const response = await fetch(url, { method: 'GET' });
+    
+                    if (response.ok) {
+                        this.showStatus('仿真系统启动成功！正在打开监控界面...', 'success');
+                        setTimeout(() => {
+                            window.open('map.html', '_blank');
+                        }, 2000);
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
-                    
                 } catch (error) {
                     console.error('启动仿真系统时出错:', error);
                     this.showStatus(`启动失败: ${error.message}`, 'error');
                 } finally {
-                    // 恢复按钮状态
                     const startBtn = document.getElementById('start-simulation-btn');
                     startBtn.innerHTML = '<i>😛</i> 启动仿真系统';
                     startBtn.disabled = false;
                 }
             },
-            
-            // 从表单更新配置对象
+    
+            // 保存当前配置为新预设
+          // 修改 saveCurrentAsPreset 方法中的保存部分
+          async saveCurrentAsPreset() {
+    const name = prompt("请输入预设名称:");
+    if (!name) return;
+    
+    const description = prompt("请输入预设描述（可选）:") || "";
+    
+    // 确保获取最新表单数据
+    this.updateConfigFromForm();
+    
+    const presetData = {
+        name: name,
+        description: description,
+        configs: this.currentConfig.configs
+    };
+
+    console.log("准备保存的预设数据:", presetData);
+
+    try {
+        let url = new URL('/conf/savePreset', window.location.origin);
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(presetData)
+        });
+
+        const result = await response.json();
+        console.log("保存响应:", result);
+        
+        if (result.success) {
+            this.showStatus(`预设 "${name}" 保存成功`, 'success');
+            // 立即刷新预设列表
+            await this.fetchAllPresets();
+        } else {
+            throw new Error(result.message || '保存失败');
+        }
+    } catch (error) {
+        console.error('保存预设失败:', error);
+        this.showStatus(`保存预设失败: ${error.message}`, 'error');
+    }
+},
+    
+            // 删除选中的预设（仍然需要后端支持 deletePreset）
+            async deleteSelectedPreset() {
+                if (this.selectedPreset) {
+                    const preset = this.selectedPreset;
+                    if (confirm(`确定要删除预设 "${preset.name}" 吗？`)) {
+                        try {
+                            let url = new URL('/conf/deletePreset', window.location.origin);
+                            url.searchParams.append("name", preset.name);
+                            const response = await fetch(url, { method: 'GET' });
+    
+                            if (response.ok) {
+                                this.showStatus(`预设 "${preset.name}" 已删除`, 'success');
+                                this.selectedPreset = null;
+                                await this.fetchAllPresets();
+                            } else {
+                                throw new Error(`删除失败: ${response.statusText}`);
+                            }
+                        } catch (error) {
+                            console.error('删除预设失败:', error);
+                            this.showStatus(`删除预设失败: ${error.message}`, 'error');
+                        }
+                    }
+                } else {
+                    this.showStatus('请先选择一个预设', 'error');
+                }
+            },
+    
+            // 渲染预设列表
+            renderPresetList() {
+                const presetList = document.getElementById('preset-list');
+                if (this.presets.length === 0) {
+                    presetList.innerHTML = `
+                        <div class="empty-state">
+                            <i>📁</i>
+                            <p>暂无预设配置</p>
+                            <p style="font-size: 12px; margin-top: 10px;">保存当前配置可创建预设</p>
+                        </div>
+                    `;
+                    return;
+                }
+    
+                presetList.innerHTML = this.presets.map(preset => `
+                    <div class="preset-item ${this.selectedPreset && this.selectedPreset.name === preset.name ? 'active' : ''}" 
+                         data-name="${preset.name}">
+                        <div class="preset-name">${preset.name}</div>
+                        <div class="preset-desc">${preset.description || '无描述'}</div>
+                    </div>
+                `).join('');
+    
+                presetList.querySelectorAll('.preset-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const presetName = item.getAttribute('data-name');
+                        const preset = this.presets.find(p => p.name === presetName);
+                        if (preset) {
+                            this.selectedPreset = preset;
+                            this.renderPresetList();
+                        }
+                    });
+                });
+            },
+    
+            // 其他函数（渲染、输入监听等保持不变）...
             updateConfigFromForm() {
                 console.log("更新配置表单数据");
                 this.currentConfig.name = document.getElementById('config-name').value;
-                
-                // 遍历所有配置项，直接使用内部的值对象
                 let index = 0;
                 for (const key in this.currentConfig.configs) {
                     const element = document.getElementById(`param-${index}`);
                     if (element) {
-                        // 直接更新值对象中的value
                         this.currentConfig.configs[key].value = element.value;
                         console.log(`更新参数 ${this.currentConfig.configs[key].name}: ${element.value}`);
                     }
                     index++;
                 }
             },
-            
-            // 渲染配置表单
+    
             renderConfigForm() {
                 console.log("渲染配置表单");
                 const sectionsContainer = document.getElementById('config-sections');
                 sectionsContainer.innerHTML = '';
-                
-                // 配置名称
+    
                 const nameSection = document.createElement('div');
                 nameSection.className = 'config-section';
                 nameSection.innerHTML = `
@@ -599,17 +720,13 @@
                     </div>
                 `;
                 sectionsContainer.appendChild(nameSection);
-                
-                // 所有参数放在一个区域
+    
                 const section = document.createElement('div');
                 section.className = 'config-section';
-                
-                // 收集所有配置项的值对象
                 const configValues = [];
                 for (const key in this.currentConfig.configs) {
                     configValues.push(this.currentConfig.configs[key]);
                 }
-                
                 section.innerHTML = `
                     <div class="section-header">
                         <div class="section-title">
@@ -624,16 +741,11 @@
                         </div>
                     </div>
                 `;
-                
                 sectionsContainer.appendChild(section);
-                
-                // 添加分类点击事件
                 this.attachSectionEvents();
-                // 添加输入框实时保存事件
                 this.attachInputEvents();
             },
-            
-            // 渲染单个参数的HTML
+    
             renderParameterHTML(config, index) {
                 return `
                     <div class="form-group">
@@ -644,32 +756,26 @@
                     </div>
                 `;
             },
-            
-            // 添加分类点击事件
+    
             attachSectionEvents() {
                 document.querySelectorAll('.section-header').forEach(header => {
                     header.addEventListener('click', () => {
                         const content = header.nextElementSibling;
                         const icon = header.querySelector('.collapse-icon');
-                        
                         const isCollapsed = content.classList.contains('collapsed');
                         content.classList.toggle('collapsed', !isCollapsed);
                         icon.textContent = isCollapsed ? '▼' : '▶';
                     });
                 });
             },
-            
-            // 添加输入框实时保存事件
+    
             attachInputEvents() {
-                // 配置名称输入框
                 const configNameInput = document.getElementById('config-name');
                 if (configNameInput) {
                     configNameInput.addEventListener('input', (e) => {
                         this.debouncedSave('configName', -1, e.target.value);
                     });
                 }
-                
-                // 参数输入框
                 let index = 0;
                 for (const key in this.currentConfig.configs) {
                     const input = document.getElementById(`param-${index}`);
@@ -681,275 +787,115 @@
                     index++;
                 }
             },
-            
-            // 防抖保存函数
-            debouncedSave(key, index, value) {
-                // 清除之前的定时器
-                if (this.saveTimeout) {
-                    clearTimeout(this.saveTimeout);
-                }
-                
-                // 显示保存状态
-                this.showSavingStatus(index);
-                
-                // 设置新的定时器
-                this.saveTimeout = setTimeout(() => {
-                    this.saveSingleParam(key, index, value);
-                }, 1000); // 1秒后保存
-            },
-            
-            // 显示保存中状态
-            showSavingStatus(index) {
-                const statusElement = document.getElementById(`save-status-${index}`);
-                if (statusElement) {
-                    statusElement.innerHTML = '<span class="saving-text">保存中...</span>';
-                }
-                
-                const inputElement = document.getElementById(index === -1 ? 'config-name' : `param-${index}`);
-                if (inputElement) {
-                    inputElement.classList.remove('saved');
-                    inputElement.classList.add('saving');
-                }
-            },
-            
-            // 显示保存成功状态
-            showSavedStatus(index) {
-                const statusElement = document.getElementById(`save-status-${index}`);
-                if (statusElement) {
-                    statusElement.innerHTML = '<span class="saved-text">✓ 已保存</span>';
-                }
-                
-                const inputElement = document.getElementById(index === -1 ? 'config-name' : `param-${index}`);
-                if (inputElement) {
-                    inputElement.classList.remove('saving');
-                    inputElement.classList.add('saved');
-                    
-                    // 2秒后清除保存状态
-                    setTimeout(() => {
-                        inputElement.classList.remove('saved');
-                        if (statusElement) {
-                            statusElement.innerHTML = '';
-                        }
-                    }, 2000);
-                }
-            },
-            
-            // 保存单个参数
-            async saveSingleParam(key, index, value) {
-                console.log(`保存参数 ${key}: ${value}`);
-                
-                try {
-                    // 更新配置对象
-                    if (index === -1) {
-                        // 配置名称
-                        this.currentConfig.name = value;
-                    } else {
-                        // 参数值
-                        this.currentConfig.configs[key].value = value;
-                    }
-                    
-                    // 保存到后端
-                    const result = await this.saveConfigToBackend();
-                    
-                    if (result.success) {
-                        this.showSavedStatus(index);
-                        console.log(`参数 ${key} 保存成功`);
-                    } else {
-                        this.showSaveErrorStatus(index, result.error);
-                        console.error(`参数 ${key} 保存失败:`, result.error);
-                    }
-                } catch (error) {
-                    this.showSaveErrorStatus(index, error.message);
-                    console.error(`参数 ${key} 保存出错:`, error);
-                }
-            },
-            
-            // 显示保存错误状态
-            showSaveErrorStatus(index, error) {
-                const statusElement = document.getElementById(`save-status-${index}`);
-                if (statusElement) {
-                    statusElement.innerHTML = `<span style="color: #e74c3c;">✗ 保存失败</span>`;
-                }
-                
-                const inputElement = document.getElementById(index === -1 ? 'config-name' : `param-${index}`);
-                if (inputElement) {
-                    inputElement.classList.remove('saving');
-                    
-                    // 3秒后清除错误状态
-                    setTimeout(() => {
-                        if (statusElement) {
-                            statusElement.innerHTML = '';
-                        }
-                    }, 3000);
-                }
-            },
-            
-            // 应用预设配置（自动保存到后端）
-            async applyPreset(presetId) {
-                const preset = this.presets.find(p => p.id === presetId);
-                if (preset) {
-                    // 1. 将预设配置复制到当前配置
-                    this.currentConfig = JSON.parse(JSON.stringify(preset.config));
-                    
-                    // 2. 重新渲染表单（前端界面更新）
-                    this.renderConfigForm();
-                    
-                    // 3. 更新选中状态
-                    this.selectedPresetId = presetId;
-                    this.renderPresetList();
-                    
-                    // 4. 自动保存到后端
-                    console.log("应用预设，开始保存到后端");
-                    const saveResult = await this.saveConfigToBackend();
-                    
-                    if (saveResult.success) {
-                        this.showStatus(`已应用预设 "${preset.name}" 并保存到系统`, 'success');
-                    } else {
-                        this.showStatus(`应用预设成功，但保存到系统失败: ${saveResult.error}`, 'error');
-                    }
-                }
-            },
-            
-            // 保存当前配置为新预设
-            saveCurrentAsPreset() {
-                const name = prompt("请输入预设名称:");
-                if (name) {
-                    const description = prompt("请输入预设描述（可选）:") || "";
-                    this.createPreset(name, description);
-                }
-            },
-            
-            // 创建新预设
-            createPreset(name, description) {
-                this.updateConfigFromForm();
-                
-                const newPreset = {
-                    id: Date.now(),
-                    name: name,
-                    description: description,
-                    config: JSON.parse(JSON.stringify(this.currentConfig))
-                };
-                
-                this.presets.push(newPreset);
-                this.selectedPresetId = newPreset.id;
-                this.renderPresetList();
-                this.showStatus(`预设 "${name}" 创建成功`, 'success');
-                this.savePresetsToLocalStorage();
-            },
-            
-            // 删除选中的预设
-            deleteSelectedPreset() {
-                if (this.selectedPresetId) {
-                    const preset = this.presets.find(p => p.id === this.selectedPresetId);
-                    if (preset && confirm(`确定要删除预设 "${preset.name}" 吗？`)) {
-                        this.presets = this.presets.filter(p => p.id !== this.selectedPresetId);
-                        this.selectedPresetId = null;
-                        this.renderPresetList();
-                        this.showStatus(`预设 "${preset.name}" 已删除`, 'success');
-                        this.savePresetsToLocalStorage();
-                    }
-                } else {
-                    this.showStatus('请先选择一个预设', 'error');
-                }
-            },
-            
-            // 渲染预设列表
-            renderPresetList() {
-                const presetList = document.getElementById('preset-list');
-                
-                if (this.presets.length === 0) {
-                    presetList.innerHTML = `
-                        <div class="empty-state">
-                            <i>📁</i>
-                            <p>暂无预设配置</p>
-                            <p style="font-size: 12px; margin-top: 10px;">保存当前配置可创建预设</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                presetList.innerHTML = this.presets.map(preset => `
-                    <div class="preset-item ${this.selectedPresetId === preset.id ? 'active' : ''}" 
-                         data-id="${preset.id}">
-                        <div class="preset-name">${preset.name}</div>
-                        <div class="preset-desc">${preset.description}</div>
-                    </div>
-                `).join('');
-                
-                presetList.querySelectorAll('.preset-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        const presetId = parseInt(item.getAttribute('data-id'));
-                        this.selectedPresetId = presetId;
-                        this.renderPresetList();
-                    });
-                });
-            },
-            
-            // 从本地存储加载预设
-            loadPresetsFromLocalStorage() {
-                const savedPresets = localStorage.getItem('systemConfigPresets');
-                if (savedPresets) {
-                    this.presets = JSON.parse(savedPresets);
-                }
-            },
-            
-            // 保存预设到本地存储
-            savePresetsToLocalStorage() {
-                localStorage.setItem('systemConfigPresets', JSON.stringify(this.presets));
-            },
-            
-            // 显示状态消息
+    // 防抖保存函数
+debouncedSave(key, index, value) {
+    // 清除之前的定时器
+    if (this.saveTimeout) clearTimeout(this.saveTimeout);
+
+    // 显示保存中状态
+    this.showSavingStatus(index);
+
+    // 1秒后执行保存
+    this.saveTimeout = setTimeout(() => {
+        this.saveSingleParam(key, index, value);
+    }, 1000);
+},
+
+// 显示保存中状态
+showSavingStatus(index) {
+    const statusElement = document.getElementById(`save-status-${index}`);
+    if (statusElement) statusElement.innerHTML = '<span class="saving-text">保存中...</span>';
+    const inputElement = document.getElementById(index === -1 ? 'config-name' : `param-${index}`);
+    if (inputElement) {
+        inputElement.classList.remove('saved');
+        inputElement.classList.add('saving');
+    }
+},
+
+// 显示保存成功状态
+showSavedStatus(index) {
+    const statusElement = document.getElementById(`save-status-${index}`);
+    if (statusElement) statusElement.innerHTML = '<span class="saved-text">✓ 已保存</span>';
+    const inputElement = document.getElementById(index === -1 ? 'config-name' : `param-${index}`);
+    if (inputElement) {
+        inputElement.classList.remove('saving');
+        inputElement.classList.add('saved');
+        setTimeout(() => {
+            inputElement.classList.remove('saved');
+            if (statusElement) statusElement.innerHTML = '';
+        }, 2000);
+    }
+},
+
+// 保存单个参数
+async saveSingleParam(key, index, value) {
+    console.log(`保存参数 ${key}: ${value}`);
+    try {
+        if (index === -1) {
+            this.currentConfig.name = value;
+        } else {
+            this.currentConfig.configs[key].value = value;
+        }
+
+        const result = await this.saveConfigToBackend();
+        if (result.success) this.showSavedStatus(index);
+        else this.showSaveErrorStatus(index, result.error);
+    } catch (error) {
+        this.showSaveErrorStatus(index, error.message);
+    }
+},
+
+// 保存错误状态
+showSaveErrorStatus(index, error) {
+    const statusElement = document.getElementById(`save-status-${index}`);
+    if (statusElement) statusElement.innerHTML = `<span style="color: #e74c3c;">✗ 保存失败</span>`;
+    const inputElement = document.getElementById(index === -1 ? 'config-name' : `param-${index}`);
+    if (inputElement) inputElement.classList.remove('saving');
+    setTimeout(() => {
+        if (statusElement) statusElement.innerHTML = '';
+    }, 3000);
+},
+
             showStatus(message, type) {
                 const statusEl = document.getElementById('status-message');
                 statusEl.textContent = message;
                 statusEl.className = `status-message status-${type}`;
                 statusEl.style.display = 'block';
-                
-                setTimeout(() => {
-                    statusEl.style.display = 'none';
-                }, 5000);
+                setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
             },
-            
-            // 初始化
-            init() {
+    
+            // 初始化入口
+            async init() {
                 console.log("初始化配置管理器");
-                this.loadPresetsFromLocalStorage();
-                this.renderPresetList();
-                this.fetchCurrentConfig();
-                
-                document.getElementById('save-preset-btn').addEventListener('click', () => {
-                    this.saveCurrentAsPreset();
-                });
-                
-                document.getElementById('apply-preset-btn').addEventListener('click', () => {
-                    if (this.selectedPresetId) {
-                        this.applyPreset(this.selectedPresetId);
+                await this.fetchAllPresets();
+                await this.fetchCurrentConfig();
+    
+                // document.getElementById('refresh-presets-btn').addEventListener('click', () => 
+                // {
+                // configManager.fetchAllPresets();
+                // });
+
+                document.getElementById('save-preset-btn').addEventListener('click', () => this.saveCurrentAsPreset());
+                document.getElementById('apply-preset-btn').addEventListener('click', () => 
+                {
+                    if (this.selectedPreset) {
+                        this.applyPreset(this.selectedPreset.name);
                     } else {
                         this.showStatus('请先选择一个预设', 'error');
                     }
                 });
-                
-                document.getElementById('delete-preset-btn').addEventListener('click', () => {
-                    this.deleteSelectedPreset();
-                });
-                
-                // 绑定启动按钮事件
-                document.getElementById('start-simulation-btn').addEventListener('click', () => {
-                    this.startSimulation();
-                });
-
-                //数据沙箱事件添加
-                document.getElementById('open-sandbox-btn').addEventListener('click', () => {
-                    this.openDataSandbox();
-                                });
+                document.getElementById('delete-preset-btn').addEventListener('click', () => this.deleteSelectedPreset());
+                document.getElementById('start-simulation-btn').addEventListener('click', () => this.startSimulation());
+                document.getElementById('open-sandbox-btn').addEventListener('click', () => this.openDataSandbox());
+            },
+    
+            openDataSandbox() {
+                window.open('sandbox.html', '_blank', 'width=1400,height=900,resizable=yes');
             }
         };
-
-        // 初始化配置管理器
-        document.addEventListener('DOMContentLoaded', () => {
-            configManager.init();
-        });
-
-    </script>
+    
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => configManager.init());
+    </script>    
 </body>
 </html>
