@@ -19,28 +19,37 @@ import com.tsAdmin.model.car.CarStatistics;
  */
 public class DataController extends Controller
 {
+    /**
+     * 获取所有POI数据
+     * <p>返回数据格式：
+     * {{"UUID": {@code String}, "name": {@code String}, "lat": {@code Double}, "lon": {@code Double}}, {...}, ...}
+     */
     public void getPoiData()
     {
         String type = getPara("type");
-        List<Map<String, String>> dataList = DBManager.getPoiData(type);
+        List<Map<String, Object>> dataList = DBManager.getPoiData(type);
         renderJson(JsonKit.toJson(dataList));
     }
 
+    /**
+     * 获取所有车辆数据
+     * <p>返回数据格式：
+     * {{"UUID": {@code String}, "type": {@code String}, "maxload": {@code Integer}, "maxvolume": {@code Integer}, "lat": {@code Double}, "lon": {@code Double}}, {...}, ...}
+     */
     public void getCarData()
     {
-        List<Map<String, String>> posList = DBManager.getCarData();
+        List<Map<String, Object>> posList = DBManager.getCarData();
         renderJson(JsonKit.toJson(posList));
     }
 
     /**
      * 获取仪表盘数据
+     * TODO: 可优化
      */
     public void getDashboardData()
     {
-        // XXX: 这里看胡少怎么写，如果一次性获取所有就在后端遍历车辆for (Car car : CarList.carList)，返回ArrayList<Map<String, String>>
-        // XXX: 如果一辆辆获取，前端遍历的话就根据uuid获取车辆uuid = getPara("UUID"); car = CarList.carList.get(uuid)，返回Map<String, String>
-        List<Map<String,String>> realdata = new ArrayList<>();
-        Double cycleCost = 0d;//该周期内cost
+        List<Map<String,String>> carData = new ArrayList<>();
+        Double cycleCost = 0.0;
         for(Car car : CarList.carList.values())
         {
             CarStatistics statistics = car.getStatistics();
@@ -64,7 +73,7 @@ public class DataController extends Controller
                         data.put(varName, String.valueOf(value));
                     }
                 }
-                realdata.add(data);
+                carData.add(data);
             }
             catch (Exception e)
             {
@@ -73,7 +82,7 @@ public class DataController extends Controller
         }
 
         Map<Double,List<Map<String,String>>> finaldata = new HashMap<>();
-        finaldata.put(cycleCost, realdata);
+        finaldata.put(cycleCost, carData);
         renderJson(JsonKit.toJson(finaldata));
     }
 
@@ -170,6 +179,8 @@ public class DataController extends Controller
 
     /**
      * 前端尝试获取特定车辆的下一个目的地时调用，是车辆更新的关键函数
+     * <p>在车辆滴答一次后，若进入需要规划路线的状态，则返回目的地坐标，否则返回{@code null}
+     * <p>返回坐标格式：{"lat": {@code double}, "lon": {@code double}}
      */
     public void getDestination()
     {
@@ -188,8 +199,8 @@ public class DataController extends Controller
             {
                 PathNode pathnode = car.fetchFirstNode();
                 dest = Map.of(
-                    "lng", pathnode.getDemand().getOrigin().lon,
-                    "lat", pathnode.getDemand().getOrigin().lat
+                    "lat", pathnode.getDemand().getOrigin().lat,
+                    "lon", pathnode.getDemand().getOrigin().lon
                 );
                 break;
             }
@@ -198,8 +209,8 @@ public class DataController extends Controller
             {
                 PathNode pathnode = car.fetchFirstNode();
                 dest = Map.of(
-                    "lng", pathnode.getDemand().getDestination().lon,
-                    "lat", pathnode.getDemand().getDestination().lat
+                    "lat", pathnode.getDemand().getDestination().lat,
+                    "lon", pathnode.getDemand().getDestination().lon
                 );
                 break;
             }

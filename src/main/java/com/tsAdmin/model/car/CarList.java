@@ -65,15 +65,15 @@ public class CarList
             }
         }
 
-        List<Map<String, String>> records = DBManager.getCarData();
-        for (Map<String, String> record : records)
+        List<Map<String, Object>> dataSet = DBManager.getCarData();
+        for (Map<String, Object> carData : dataSet)
         {
-            String uuid = record.get("UUID");
-            CarType carType = CarType.valueOf(record.get("type"));
-            int maxLoad = Integer.parseInt(record.get("maxload"));
-            int maxVolume = Integer.parseInt(record.get("maxvolume"));
-            double lat = Double.parseDouble(record.get("location_lat"));
-            double lon = Double.parseDouble(record.get("location_lon"));
+            String uuid = carData.get("UUID").toString();
+            CarType carType = CarType.valueOf(carData.get("type").toString());
+            int maxLoad = (int)carData.get("maxload");
+            int maxVolume = (int)carData.get("maxvolume");
+            double lat = (double)carData.get("lat");
+            double lon = (double)carData.get("lon");
 
             Car car = new Car(uuid, carType, maxLoad, maxVolume, new Coordinate(lat, lon));
 

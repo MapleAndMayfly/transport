@@ -42,6 +42,8 @@ public final class ConfigLoader
         }
     }
 
+    public static boolean containsKey(String key) { return configData.containsKey(key); }
+
     public static String getString(String key) { return getString(key, "Lost String!"); }
     public static int getInt(String key) { return getInt(key, -1); }
     public static long getLong(String key) { return getLong(key, -1L); }
@@ -129,11 +131,6 @@ public final class ConfigLoader
         }
     }
 
-    public static boolean containsKey(String key)
-    {
-        return configData.containsKey(key);
-    }
-
     public static JSONObject getFullJson()
     {
         try
@@ -142,10 +139,7 @@ public final class ConfigLoader
             if (usedConfig == "config.json")
             {
                 InputStream inputStream = ConfigLoader.class.getClassLoader().getResourceAsStream(usedConfig);
-                if (inputStream == null)
-                {
-                    throw new RuntimeException(usedConfig + " 不存在！");
-                }
+                if (inputStream == null) throw new RuntimeException(usedConfig + " 不存在！");
 
                 jsonString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
                 inputStream.close();

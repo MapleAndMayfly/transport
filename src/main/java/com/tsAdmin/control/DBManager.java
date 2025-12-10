@@ -71,9 +71,9 @@ public class DBManager
      * @return 所有该类型POI数据的列表，每一条数据包含id, name, location_lat, location_lon
      * @throws IllegalAgumentException 如果传入的POI类型未定义
      */
-    public static List<Map<String, String>> getPoiData(String type)
+    public static List<Map<String, Object>> getPoiData(String type)
     {
-        List<Map<String, String>> poiData = new ArrayList<>();
+        List<Map<String, Object>> poiData = new ArrayList<>();
         String table = POI_TABLES.get(type);
         if (table == null) throw new IllegalArgumentException("Invalid table type: " + type);
 
@@ -84,11 +84,11 @@ public class DBManager
         {
             for (Record record : rawData)
             {
-                Map<String, String> element = Map.of(
+                Map<String, Object> element = Map.of(
                     "UUID", record.get("location_ID"),
                     "name", record.get("name"),
-                    "lat", record.get("location_lat").toString(),
-                    "lon", record.get("location_lon").toString()
+                    "lat", record.get("location_lat"),
+                    "lon", record.get("location_lon")
                 );
                 poiData.add(element);
             }
@@ -131,9 +131,9 @@ public class DBManager
         return demandData;
     }
 
-    public static List<Map<String, String>> getCarData()
+    public static List<Map<String, Object>> getCarData()
     {
-        List<Map<String, String>> carData = new ArrayList<>();
+        List<Map<String, Object>> carData = new ArrayList<>();
         
         try
         {
@@ -144,13 +144,13 @@ public class DBManager
             {
                 for (Record record : rawData)
                 {
-                    Map<String, String> element = Map.of(
+                    Map<String, Object> element = Map.of(
                         "UUID", record.get("UUID"),
                         "type", record.get("type"),
-                        "maxload", record.get("maxload").toString(),
-                        "maxvolume", record.get("maxvolume").toString(),
-                        "location_lat", record.get("location_lat").toString(),
-                        "location_lon", record.get("location_lon").toString()
+                        "maxload", record.get("maxload"),
+                        "maxvolume", record.get("maxvolume"),
+                        "lat", record.get("location_lat"),
+                        "lon", record.get("location_lon")
                     );
                     carData.add(element);
                 }

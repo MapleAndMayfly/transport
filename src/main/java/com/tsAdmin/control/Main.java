@@ -31,7 +31,7 @@ public class Main
     {
         CarList.init();
         DemandList.init();
-        // 将DataUpdater作为独立线程运行，避免阻塞主线程
+        // 将 DataUpdater 作为独立线程运行，避免阻塞主线程
         Thread updaterThread = new Thread(updater);
         // 设置为守护线程，主程序结束时自动结束
         updaterThread.setDaemon(true);

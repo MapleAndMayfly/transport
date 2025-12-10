@@ -116,7 +116,7 @@ async function initCar()//生成车辆
 
     data.forEach(car => {
         const marker = new AMap.Marker({
-            position: new AMap.LngLat(car.location_lon, car.location_lat),
+            position: new AMap.LngLat(car.lon, car.lat),
             icon: carIcon,
             map: map
         });
@@ -231,7 +231,7 @@ async function updateCars() {
                     continue;
                 }
 
-                const end = [recivdata.lng, recivdata.lat];
+                const end = [recivdata.lon, recivdata.lat];
 
                 // 获取当前位置
                 const currentLngLat = car.marker.getPosition();
