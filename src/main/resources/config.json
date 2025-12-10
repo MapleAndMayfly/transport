@@ -1,42 +1,42 @@
 {
-    "name": "Default",
-    "configs":
+  "name": "Default",
+  "configs":
+  {
+    "Main.port":
     {
-        "Main.port":
-        {
-            "name" : "运行端口",
-            "unit": "",
-            "value": 8080
-        },
-        "Main.update_interval":
-        {
-            "name": "后端更新间隔",
-            "unit": "s",
-            "value": 5
-        },
-        "Timer.tick_speed":
-        {
-            "name": "时间步进",
-            "unit": "min",
-            "value": 30
-        },
-        "DataUpdater.demand_per_cycle":
-        {
-            "name": "订单生成速率",
-            "unit": "个/周期",
-            "value": 0
-        },
-        "DataUpdater.applied_scheduler":
-        {
-            "name": "采用的调度器",
-            "unit": "",
-            "value": "Greedy"
-        },
-        "CarList.car_num":
-        {
-            "name": "模拟车辆数",
-            "unit": "辆",
-            "value": 100
-        }
+      "name" : "运行端口",
+      "unit": "",
+      "value": 8080
+    },
+    "Main.update_interval":
+    {
+      "name": "后端更新间隔",
+      "unit": "s",
+      "value": 5
+    },
+    "Timer.tick_speed":
+    {
+      "name": "时间步进",
+      "unit": "min",
+      "value": 30
+    },
+    "DataUpdater.demand_per_cycle":
+    {
+      "name": "订单生成速率",
+      "unit": "个/周期",
+      "value": 0
+    },
+    "DataUpdater.applied_scheduler":
+    {
+      "name": "采用的调度器",
+      "unit": "",
+      "value": "Greedy"
+    },
+    "CarList.car_num":
+    {
+      "name": "模拟车辆数",
+      "unit": "辆",
+      "value": 100
     }
+  }
 }

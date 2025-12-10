@@ -2,8 +2,8 @@ package com.tsAdmin.common;
 
 import com.tsAdmin.control.DBManager;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -13,8 +13,9 @@ import java.nio.charset.StandardCharsets;
  */
 public final class ConfigLoader
 {
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     private static String usedConfig;
-    private static JSONObject configData;
+    private static JsonNode configData;
 
     /**
      * 从 resources/config.json 加载配置数据
@@ -34,15 +35,16 @@ public final class ConfigLoader
 
     public static void loadConfig()
     {
-        configData = getFullJson().getJSONObject("configs");
+        JsonNode fullJson = getFullJson();
+        configData = fullJson.get("configs");
 
-        if (configData == null)
+        if (configData == null || configData.isNull())
         {
             throw new RuntimeException(usedConfig + " 中缺少 \"configs\" 节点");
         }
     }
 
-    public static boolean containsKey(String key) { return configData.containsKey(key); }
+    public static boolean containsKey(String key) { return configData != null && configData.has(key); }
 
     public static String getString(String key) { return getString(key, "Lost String!"); }
     public static int getInt(String key) { return getInt(key, -1); }
@@ -54,11 +56,14 @@ public final class ConfigLoader
     {
         try
         {
-            JSONObject configItem = configData.getJSONObject(key);
-            if (configItem == null) return defaultValue;
+            JsonNode configItem = configData.get(key);
+            if (configItem == null || configItem.isNull()) return defaultValue;
 
-            String value = configItem.getString("value");
-            return value != null ? value : defaultValue;
+            JsonNode valueNode = configItem.get("value");
+            if (valueNode == null || valueNode.isNull()) return defaultValue;
+            
+            String value = valueNode.asText();
+            return (value != null && !value.isEmpty()) ? value : defaultValue;
         }
         catch (Exception e)
         {
@@ -70,11 +75,13 @@ public final class ConfigLoader
     {
         try
         {
-            JSONObject configItem = configData.getJSONObject(key);
-            if (configItem == null) return defaultValue;
+            JsonNode configItem = configData.get(key);
+            if (configItem == null || configItem.isNull()) return defaultValue;
 
-            Integer value = configItem.getInteger("value");
-            return value != null ? value : defaultValue;
+            JsonNode valueNode = configItem.get("value");
+            if (valueNode == null || valueNode.isNull()) return defaultValue;
+            
+            return valueNode.asInt(defaultValue);
         }
         catch (Exception e)
         {
@@ -86,11 +93,13 @@ public final class ConfigLoader
     {
         try
         {
-            JSONObject configItem = configData.getJSONObject(key);
-            if (configItem == null) return defaultValue;
+            JsonNode configItem = configData.get(key);
+            if (configItem == null || configItem.isNull()) return defaultValue;
 
-            Long value = configItem.getLong("value");
-            return value != null ? value : defaultValue;
+            JsonNode valueNode = configItem.get("value");
+            if (valueNode == null || valueNode.isNull()) return defaultValue;
+            
+            return valueNode.asLong(defaultValue);
         }
         catch (Exception e)
         {
@@ -102,11 +111,13 @@ public final class ConfigLoader
     {
         try
         {
-            JSONObject configItem = configData.getJSONObject(key);
-            if (configItem == null) return defaultValue;
+            JsonNode configItem = configData.get(key);
+            if (configItem == null || configItem.isNull()) return defaultValue;
 
-            Double value = configItem.getDouble("value");
-            return value != null ? value : defaultValue;
+            JsonNode valueNode = configItem.get("value");
+            if (valueNode == null || valueNode.isNull()) return defaultValue;
+            
+            return valueNode.asDouble(defaultValue);
         }
         catch (Exception e)
         {
@@ -118,11 +129,13 @@ public final class ConfigLoader
     {
         try
         {
-            JSONObject configItem = configData.getJSONObject(key);
-            if (configItem == null) return defaultValue;
+            JsonNode configItem = configData.get(key);
+            if (configItem == null || configItem.isNull()) return defaultValue;
 
-            Boolean value = configItem.getBoolean("value");
-            return value != null ? value : defaultValue;
+            JsonNode valueNode = configItem.get("value");
+            if (valueNode == null || valueNode.isNull()) return defaultValue;
+            
+            return valueNode.asBoolean(defaultValue);
         }
         catch (Exception e)
         {
@@ -131,12 +144,12 @@ public final class ConfigLoader
         }
     }
 
-    public static JSONObject getFullJson()
+    public static JsonNode getFullJson()
     {
         try
         {
             String jsonString = "";
-            if (usedConfig == "config.json")
+            if (usedConfig.equals("config.json"))
             {
                 InputStream inputStream = ConfigLoader.class.getClassLoader().getResourceAsStream(usedConfig);
                 if (inputStream == null) throw new RuntimeException(usedConfig + " 不存在！");
@@ -149,7 +162,7 @@ public final class ConfigLoader
                 jsonString = DBManager.getPreset(usedConfig);
             }
 
-            return JSON.parseObject(jsonString);
+            return objectMapper.readTree(jsonString);
         }
         catch (Exception e)
         {

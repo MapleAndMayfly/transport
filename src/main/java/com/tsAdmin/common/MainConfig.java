@@ -17,10 +17,11 @@ public class MainConfig extends JFinalConfig
     public void configConstant(Constants me)
     {
         PropKit.use("config.properties");
-        me.setDevMode(PropKit.getBoolean("devMode", false));
-        //me.setError404View("/common/404.html");
-        //me.setError500View("/common/500.html");
+        me.setDevMode(false);   // PropKit.getBoolean("devMode", false));
+        // me.setError404View("/common/404.html");
+        // me.setError500View("/common/500.html");
         me.setViewType(ViewType.FREE_MARKER);
+        
     }
 
     /** 配置路由 */

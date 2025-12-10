@@ -5,14 +5,15 @@ import java.util.List;
 import java.util.Map;
 
 import com.jfinal.plugin.activerecord.Record;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jfinal.plugin.activerecord.Db;
 import com.tsAdmin.model.Demand;
 import com.tsAdmin.model.car.Car;
 
 public class DBManager
 {
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final Map<String, String> POI_TABLES = Map.of(
         "pharmaProducer", "pharmaceutical_producer",
         "steelProducer", "steel_producer",
@@ -189,7 +190,7 @@ public class DBManager
         }
     }
 
-    public static List<String> getAllPresets() 
+    public static List<String> getAllPresets()
     {
         List<String> presets = new ArrayList<>();
         
@@ -230,14 +231,16 @@ public class DBManager
     try {
         System.out.println("接收到的预设数据: " + fullString);
         
-        JSONObject json = JSON.parseObject(fullString);
-        if (json == null) {
+        JsonNode json = objectMapper.readTree(fullString);
+        if (json == null || json.isNull())
+        {
             System.err.println("JSON 解析失败: " + fullString);
             return;
         }
         
         // 获取预设名称，如果不存在则使用默认名称
-        String name = json.getString("name");
+        JsonNode nameNode = json.get("name");
+        String name = (nameNode != null && !nameNode.isNull()) ? nameNode.asText() : null;
         if (name == null || name.trim().isEmpty()) {
             name = "Unnamed_Preset_" + System.currentTimeMillis();
             System.out.println("使用默认名称: " + name);

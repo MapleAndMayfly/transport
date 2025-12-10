@@ -1,5 +1,8 @@
 package com.tsAdmin.control;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.jfinal.core.JFinal;
 import com.tsAdmin.common.ConfigLoader;
 import com.tsAdmin.model.DemandList;
@@ -8,6 +11,7 @@ import com.tsAdmin.model.car.CarList;
 public class Main
 {
     public static DataUpdater updater = new DataUpdater();
+    private static final Logger logger = LogManager.getLogger("App");
 
     public static void main(String[] args)
     {
@@ -24,6 +28,7 @@ public class Main
             e.printStackTrace();
         }
 
+        logger.info("Server starts at http://localhost:{}", port);
         JFinal.start("src/main/webapp", port, "/", updateInterval);
     }
 
