@@ -4,16 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.jfinal.plugin.activerecord.Record;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jfinal.plugin.activerecord.Db;
+
 import com.tsAdmin.model.Demand;
 import com.tsAdmin.model.car.Car;
 
 public class DBManager
 {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Logger logger = LogManager.getLogger(DBManager.class);
+
     private static final Map<String, String> POI_TABLES = Map.of(
         "pharmaProducer", "pharmaceutical_producer",
         "steelProducer", "steel_producer",
@@ -36,19 +39,18 @@ public class DBManager
         {
             String sql = "SELECT COUNT(*) AS count FROM " + tableName;
             Record record = Db.findFirst(sql);
-            if (record == null)
-            {
-                throw new RuntimeException("Query failed");
-            }
+            if (record == null) throw new RuntimeException("Query failed");
+
             return record.getLong("count");
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            logger.error("Failed to get count for {}", tableName, e);
             return -1;
         }
     }
 
+    // TODO: 上下游关系功能需要加载并保存所有POI，因此随机POI不应该再调用数据库，此函数应该废弃
     public static Map<String, String> getRandPoi(String type)
     {
         String table = POI_TABLES.get(type);
@@ -68,41 +70,50 @@ public class DBManager
 
     /**
      * 获取POI数据列表
-     * @param type 要获取的对象类型，只能为{@code POI_TABLES}中的键所对应的字符串
-     * @return 所有该类型POI数据的列表，每一条数据包含id, name, location_lat, location_lon
+     * @param type 要获取的对象类型，只能为 {@code POI_TABLES} 中的键所对应的字符串
+     * @return 所有该类型 POI 数据的列表，每一条数据包含 id, name, location_lat, location_lon
      * @throws IllegalAgumentException 如果传入的POI类型未定义
      */
     public static List<Map<String, Object>> getPoiData(String type)
     {
-        List<Map<String, Object>> poiData = new ArrayList<>();
-        String table = POI_TABLES.get(type);
-        if (table == null) throw new IllegalArgumentException("Invalid table type: " + type);
-
-        String sql = "SELECT location_ID, name, location_lat, location_lon FROM " + table;
-        List<Record> rawData = Db.find(sql);
-
-        if (rawData != null && !rawData.isEmpty())
+        try
         {
-            for (Record record : rawData)
+            List<Map<String, Object>> poiData = new ArrayList<>();
+            String table = POI_TABLES.get(type);
+            if (table == null) throw new IllegalArgumentException("Invalid table type: " + type);
+
+            String sql = "SELECT location_ID, name, location_lat, location_lon FROM " + table;
+            List<Record> rawData = Db.find(sql);
+
+            if (rawData != null && !rawData.isEmpty())
             {
-                Map<String, Object> element = Map.of(
-                    "UUID", record.get("location_ID"),
-                    "name", record.get("name"),
-                    "lat", record.get("location_lat"),
-                    "lon", record.get("location_lon")
-                );
-                poiData.add(element);
+                for (Record record : rawData)
+                {
+                    Map<String, Object> element = Map.of(
+                        "UUID", record.get("location_ID"),
+                        "name", record.get("name"),
+                        "lat", record.get("location_lat"),
+                        "lon", record.get("location_lon")
+                    );
+                    poiData.add(element);
+                }
             }
+
+            logger.trace("Got POI list({} total) form SQL table: {}", rawData != null ? rawData.size() : 0, table);
+            return poiData;
         }
-        return poiData;
+        catch (Exception e)
+        {
+            logger.error("Failed to get POI list from SQL", e);
+            return null;
+        }
     }
 
     public static List<Map<String, String>> getDemandData()
     {
-        List<Map<String, String>> demandData = new ArrayList<>();
-        
         try
         {
+            List<Map<String, String>> demandData = new ArrayList<>();
             String sql = "SELECT UUID, origin_lat, origin_lon, destination_lat, destination_lon, type, quantity, volume FROM demand";
             List<Record> rawData = Db.find(sql);
             
@@ -123,24 +134,25 @@ public class DBManager
                     demandData.add(element);
                 }
             }
+
+            logger.trace("Got demand list({} total) from SQL", rawData != null ? rawData.size() : 0);
+            return demandData;
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            logger.error("Failed to get demand list from SQL", e);
+            return null;
         }
-        
-        return demandData;
     }
 
     public static List<Map<String, Object>> getCarData()
     {
-        List<Map<String, Object>> carData = new ArrayList<>();
-        
         try
         {
+            List<Map<String, Object>> carData = new ArrayList<>();
             String sql = "SELECT UUID, type, maxload, maxvolume, location_lat, location_lon FROM car";
             List<Record> rawData = Db.find(sql);
-            
+
             if (rawData != null && !rawData.isEmpty())
             {
                 for (Record record : rawData)
@@ -156,133 +168,118 @@ public class DBManager
                     carData.add(element);
                 }
             }
+
+            logger.trace("Got car list({} total) from SQL", rawData != null ? rawData.size() : 0);
+            return carData;
         }
         catch (Exception e)
         {
-            e.printStackTrace();
-        }
-
-        return carData;
-    }
-
-    public static String getPreset(String name)
-    {
-        try 
-        {
-            String sql = "SELECT content FROM preset WHERE name = ? LIMIT 1";
-            List<Record> records = Db.find(sql, name);
-        
-        if (records != null && !records.isEmpty()) 
-            {
-                String content = records.get(0).getStr("content");
-                System.out.println("获取预设内容 - 名称: " + name + ", 内容长度: " + (content != null ? content.length() : 0));
-                return content;
-            } else 
-            {
-                System.out.println("未找到预设: " + name);
-                return null;
-            }
-        } catch (Exception e) 
-        {
-            System.err.println("获取预设异常: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Failed to get car list from SQL", e);
             return null;
         }
     }
 
-    public static List<String> getAllPresets()
+    public static String getPreset(String uuid)
     {
-        List<String> presets = new ArrayList<>();
-        
-        try 
+        try
         {
-            String sql = "SELECT name, content FROM preset ORDER BY name";
-            List<Record> raws = Db.find(sql);
-            System.out.println("从数据库获取的预设记录数: " + (raws != null ? raws.size() : 0));
-            
-            if (raws != null && !raws.isEmpty()) 
+            String sql = "SELECT content FROM preset WHERE UUID = ? LIMIT 1";
+            Record record = Db.findFirst(sql, uuid);
+
+            if (record != null)
             {
-                for (Record r : raws) 
-                {
-                    String name = r.getStr("name");
-                    String content = r.getStr("content");
-                    System.out.println("预设 - 名称: " + name + ", 内容长度: " + (content != null ? content.length() : 0));
-                    
-                    if (content != null) 
-                    {
-                        // 这里直接返回内容字符串，而不是 Record 的字符串表示
-                        presets.add(content);
-                    }
-                }
-            } else 
-            {
-                System.out.println("数据库中没有找到预设记录");
+                String content = record.getStr("content");
+                int length = content != null ? content.length() : 0;
+
+                logger.trace("Got preset(UUID:{}) from SQL, content length: {}", uuid, length);
+                return content;
             }
-        } catch (Exception e) 
-        {
-            System.err.println("获取预设列表异常: " + e.getMessage());
-            e.printStackTrace();
+            else
+            {
+                logger.warn("Preset(UUID:{}) not found, null returned", uuid);
+                return null;
+            }
         }
-        return presets;
+        catch (Exception e)
+        {
+            logger.error("Failed to get preset(UUID:{}) from SQL", uuid, e);
+            return null;
+        }
     }
 
-   public static void savePreset(String fullString)
-{
-    try {
-        System.out.println("接收到的预设数据: " + fullString);
-        
-        JsonNode json = objectMapper.readTree(fullString);
-        if (json == null || json.isNull())
+    public static List<Map<String, String>> getPresetList()
+    {
+
+        try
         {
-            System.err.println("JSON 解析失败: " + fullString);
-            return;
+            List<Map<String, String>> presets = new ArrayList<>();
+            String sql = "SELECT UUID, content FROM preset";
+            List<Record> rawData = Db.find(sql);
+
+            if (rawData != null && !rawData.isEmpty())
+            {
+                for (Record record : rawData)
+                {
+                    Map<String, String> element = Map.of(
+                        "UUID", record.getStr("UUID"),
+                        "content", record.getStr("content")
+                    );
+                    presets.add(element);
+                }
+            }
+
+            logger.trace("Got preset list({} total) from SQL", rawData != null ? rawData.size() : 0);
+            return presets;
         }
-        
-        // 获取预设名称，如果不存在则使用默认名称
-        JsonNode nameNode = json.get("name");
-        String name = (nameNode != null && !nameNode.isNull()) ? nameNode.asText() : null;
-        if (name == null || name.trim().isEmpty()) {
-            name = "Unnamed_Preset_" + System.currentTimeMillis();
-            System.out.println("使用默认名称: " + name);
-        }
-        
-        System.out.println("保存预设: " + name);
-        
-        // 检查预设是否已存在
-        String sql = "SELECT content FROM preset WHERE name = ? LIMIT 1";
-        Record exist = Db.findFirst(sql, name);
-        
-        if (exist != null)
+        catch (Exception e)
         {
-            // 更新已存在的预设
-            String updateSql = "UPDATE preset SET content = ? WHERE name = ?";
-            int updated = Db.update(updateSql, fullString, name);
-            System.out.println("更新预设结果: " + updated);
+            logger.error("Failed to get preset list from SQL", e);
+            return null;
         }
-        else
-        {
-            // 插入新预设
-            Record presetRecord = new Record();
-            presetRecord.set("name", name)
-                        .set("content", fullString);
-            boolean saved = Db.save("preset", presetRecord);
-            System.out.println("保存新预设结果: " + saved);
-        }
-        
-        System.out.println("预设保存完成: " + name);
-        
-    } catch (Exception e) {
-        System.err.println("保存预设时发生错误: " + e.getMessage());
-        e.printStackTrace();
-        throw new RuntimeException("保存预设失败", e);
     }
-}
+
+    /**
+     * 保存预设到数据库
+     * @param isNew 是否为新预设
+     * @param uuid 将保存预设的 UUID
+     * @param content 预设内容，格式同resources/config.json
+     * @return 此次保存操作成功与否
+     */
+    public static boolean savePreset(boolean isNew, String uuid, String content)
+    {
+        try
+        {
+            boolean success = false;
+
+            if (isNew)
+            {
+                Record presetRecord = new Record();
+                presetRecord.set("UUID", uuid)
+                            .set("content", content);
+                success = Db.save("preset", presetRecord);
+            }
+            else
+            {
+                String updateSql = "UPDATE preset SET content = ? WHERE UUID = ?";
+                success = Db.update(updateSql, content, uuid) > 0;
+            }
+
+            logger.trace("Saved preset(UUID:{}), success status: {}", uuid, success);
+            return success;
+        }
+        catch (Exception e)
+        {
+            logger.error("Failed to save preset(UUID:{})", uuid, e);
+            return false;
+        }
+    }
 
     /**
      * 保存订单到数据库
      * @param demand 要保存的订单
+     * @return 此次保存成功与否
      */
-    public static void saveDemand(Demand demand)
+    public static boolean saveDemand(Demand demand)
     {
         Record demandRecord = new Record();
         demandRecord.set("UUID", demand.getUUID())
@@ -293,15 +290,16 @@ public class DBManager
                     .set("type", demand.getType().name())
                     .set("quantity",demand.getQuantity())
                     .set("volume", demand.getVolume());
-        Db.save("demand", demandRecord);
+        return Db.save("demand", demandRecord);
     }
 
     /**
      * 保存车辆到数据库
      * <p><i>仅在初始化车辆数不足时调用</i>
      * @param car 要保存的车辆
+     * @return 此次保存成功与否
      */
-    public static void saveCar(Car car)
+    public static boolean saveCar(Car car)
     {
         Record carRecord = new Record();
         carRecord.set("UUID", car.getUUID())
@@ -310,7 +308,7 @@ public class DBManager
                  .set("maxVolume", car.getMaxVolume())
                  .set("location_lat", car.getPosition().lat)
                  .set("location_lon", car.getPosition().lon);
-        Db.save("car", carRecord);
+        return Db.save("car", carRecord);
     }
 
     /* ================== 以下内容会导致模拟时无法保证情况相同，暂时废弃 ================== */

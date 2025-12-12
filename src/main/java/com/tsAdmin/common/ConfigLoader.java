@@ -1,12 +1,16 @@
 package com.tsAdmin.common;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+
 import com.tsAdmin.control.DBManager;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 
 /**
  * 读取通用 JSON 配置，从 resources/config.json 加载对应配置
@@ -14,133 +18,46 @@ import java.nio.charset.StandardCharsets;
 public final class ConfigLoader
 {
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    private static String usedConfig;
+    private static final Logger logger = LogManager.getLogger(ConfigLoader.class);
+    private static String configUUID;
     private static JsonNode configData;
 
-    /**
-     * 从 resources/config.json 加载配置数据
-     */
     static
     {
-        use("config.json");
+        // 从 resources/config.json 加载配置数据
+        use("0");
     }
 
-    private ConfigLoader(){}
+    public static String getConfigUUID() { return configUUID; }
 
-    public static void use(String path)
-    {
-        usedConfig = path;
-        loadConfig();
-    }
-
-    public static void loadConfig()
-    {
-        JsonNode fullJson = getFullJson();
-        configData = fullJson.get("configs");
-
-        if (configData == null || configData.isNull())
-        {
-            throw new RuntimeException(usedConfig + " 中缺少 \"configs\" 节点");
-        }
-    }
-
-    public static boolean containsKey(String key) { return configData != null && configData.has(key); }
-
-    public static String getString(String key) { return getString(key, "Lost String!"); }
-    public static int getInt(String key) { return getInt(key, -1); }
-    public static long getLong(String key) { return getLong(key, -1L); }
-    public static double getDouble(String key) { return getDouble(key, -1.0); }
-    public static boolean getBoolean(String key) { return getBoolean(key, false); }
-
-    public static String getString(String key, String defaultValue)
+    public static boolean use(String uuid) { return use(uuid, false); }
+    public static boolean use(String uuid, boolean reload)
     {
         try
         {
-            JsonNode configItem = configData.get(key);
-            if (configItem == null || configItem.isNull()) return defaultValue;
+            // 当前配置已是要使用的配置且并不强制重加载，跳过加载过程
+            if (!reload && configUUID == uuid)
+            {
+                logger.trace("Config(UUID:{}) applied with no change", uuid);
+                return true;
+            }
 
-            JsonNode valueNode = configItem.get("value");
-            if (valueNode == null || valueNode.isNull()) return defaultValue;
-            
-            String value = valueNode.asText();
-            return (value != null && !value.isEmpty()) ? value : defaultValue;
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-            return defaultValue;
-        }
-    }
-    public static Integer getInt(String key, Integer defaultValue)
-    {
-        try
-        {
-            JsonNode configItem = configData.get(key);
-            if (configItem == null || configItem.isNull()) return defaultValue;
+            configUUID = uuid;
+            JsonNode fullJson = getFullJson();
+            configData = fullJson.get("configs");
 
-            JsonNode valueNode = configItem.get("value");
-            if (valueNode == null || valueNode.isNull()) return defaultValue;
-            
-            return valueNode.asInt(defaultValue);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-            return defaultValue;
-        }
-    }
-    public static Long getLong(String key, Long defaultValue)
-    {
-        try
-        {
-            JsonNode configItem = configData.get(key);
-            if (configItem == null || configItem.isNull()) return defaultValue;
+            if (configData == null || configData.isNull())
+            {
+                throw new NoSuchFieldException("No \"configs\" node found in config(UUID:" + configUUID + ")!");
+            }
 
-            JsonNode valueNode = configItem.get("value");
-            if (valueNode == null || valueNode.isNull()) return defaultValue;
-            
-            return valueNode.asLong(defaultValue);
+            logger.trace("Config(UUID:{}) applied successfully", uuid);
+            return true;
         }
-        catch (Exception e)
+        catch (NoSuchFieldException e)
         {
-            e.printStackTrace();
-            return defaultValue;
-        }
-    }
-    public static Double getDouble(String key, Double defaultValue)
-    {
-        try
-        {
-            JsonNode configItem = configData.get(key);
-            if (configItem == null || configItem.isNull()) return defaultValue;
-
-            JsonNode valueNode = configItem.get("value");
-            if (valueNode == null || valueNode.isNull()) return defaultValue;
-            
-            return valueNode.asDouble(defaultValue);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-            return defaultValue;
-        }
-    }
-    public static Boolean getBoolean(String key, Boolean defaultValue)
-    {
-        try
-        {
-            JsonNode configItem = configData.get(key);
-            if (configItem == null || configItem.isNull()) return defaultValue;
-
-            JsonNode valueNode = configItem.get("value");
-            if (valueNode == null || valueNode.isNull()) return defaultValue;
-            
-            return valueNode.asBoolean(defaultValue);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-            return defaultValue;
+            logger.error("Failed to load config(UUID:{})", uuid, e);
+            return false;
         }
     }
 
@@ -149,24 +66,127 @@ public final class ConfigLoader
         try
         {
             String jsonString = "";
-            if (usedConfig.equals("config.json"))
+            if (configUUID.equals("0"))
             {
-                InputStream inputStream = ConfigLoader.class.getClassLoader().getResourceAsStream(usedConfig);
-                if (inputStream == null) throw new RuntimeException(usedConfig + " 不存在！");
+                InputStream inputStream = ConfigLoader.class.getClassLoader().getResourceAsStream("config.json");
+                if (inputStream == null) throw new FileNotFoundException("Default config file not found!");
 
                 jsonString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
                 inputStream.close();
             }
             else
             {
-                jsonString = DBManager.getPreset(usedConfig);
+                jsonString = DBManager.getPreset(configUUID);
             }
 
             return objectMapper.readTree(jsonString);
         }
         catch (Exception e)
         {
-            throw new RuntimeException("加载配置文件失败: " + e.getMessage(), e);
+            logger.error("Failed to load full json of config(UUID:{})", configUUID, e);
+            return null;
+        }
+    }
+
+    public static String getString(String key) { return getString(key, "Lost String"); }
+    public static int getInt(String key) { return getInt(key, -1); }
+    public static long getLong(String key) { return getLong(key, -1L); }
+    public static double getDouble(String key) { return getDouble(key, -1.0); }
+    public static boolean getBoolean(String key) { return getBoolean(key, false); }
+
+    private static JsonNode getNode(String key)
+    {
+        JsonNode configItem = configData.get(key);
+        if (configItem == null || configItem.isNull())
+        {
+            logger.warn("Key [{}] not found in config(UUID:{}), default value returned", key, configUUID);
+            return null;
+        }
+
+        JsonNode valueNode = configItem.get("value");
+        if (valueNode == null || valueNode.isNull())
+        {
+            logger.warn("Value not found for key [{}] in config(UUID:{}), default value returned", key, configUUID);
+            return null;
+        }
+
+        return valueNode;
+    }
+
+    public static String getString(String key, String defaultValue)
+    {
+        try
+        {
+            JsonNode valueNode = getNode(key);
+            if (valueNode == null) return defaultValue;
+
+            String value = valueNode.asText();
+            return (value != null && !value.isEmpty()) ? value : defaultValue;
+        }
+        catch (Exception e)
+        {
+            logger.error("Failed to get value for key [{}] in config(UUID:{}), default value [{}] returned", key, configUUID, defaultValue);
+            return defaultValue;
+        }
+    }
+    public static Integer getInt(String key, Integer defaultValue)
+    {
+        try
+        {
+            JsonNode valueNode = getNode(key);
+            if (valueNode == null) return defaultValue;
+
+            return valueNode.asInt(defaultValue);
+        }
+        catch (Exception e)
+        {
+            logger.error("Failed to get value for key [{}] in config(UUID:{}), default value [{}] returned", key, configUUID, defaultValue);
+            return defaultValue;
+        }
+    }
+    public static Long getLong(String key, Long defaultValue)
+    {
+        try
+        {
+            JsonNode valueNode = getNode(key);
+            if (valueNode == null) return defaultValue;
+
+            return valueNode.asLong(defaultValue);
+        }
+        catch (Exception e)
+        {
+            logger.error("Failed to get value for key [{}] in config(UUID:{}), default value [{}] returned", key, configUUID, defaultValue);
+            return defaultValue;
+        }
+    }
+    public static Double getDouble(String key, Double defaultValue)
+    {
+        try
+        {
+            JsonNode valueNode = getNode(key);
+            if (valueNode == null) return defaultValue;
+
+            return valueNode.asDouble(defaultValue);
+        }
+        catch (Exception e)
+        {
+            logger.error("Failed to get value for key [{}] in config(UUID:{}), default value [{}] returned", key, configUUID, defaultValue);
+            return defaultValue;
+        }
+    }
+    public static Boolean getBoolean(String key, Boolean defaultValue)
+    {
+        try
+        {
+            JsonNode valueNode = getNode(key);
+            if (valueNode == null) return defaultValue;
+
+            return valueNode.asBoolean(defaultValue);
+        }
+        catch (Exception e)
+        {
+            logger.error("Failed to get value for key [{}] in config(UUID:{}), default value [{}] returned", key, configUUID, defaultValue);
+            return defaultValue;
         }
     }
 }

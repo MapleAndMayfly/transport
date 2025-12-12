@@ -1,11 +1,16 @@
 package com.tsAdmin.control;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jfinal.core.Controller;
-import com.tsAdmin.common.ConfigLoader;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+
+import com.jfinal.core.Controller;
+
+import com.tsAdmin.common.ConfigLoader;
+
+import freemarker.template.utility.NullArgumentException;
 
 /**
  * 配置控制器
@@ -13,83 +18,115 @@ import java.util.Map;
  */
 public class ConfController extends Controller
 {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-    
-    /** 获取默认配置 */
+    private static final Logger logger = LogManager.getLogger(ConfController.class);
+
+    private void reply(boolean success, String message)
+    {
+        renderJson(Map.of("success", success, "message", message));
+    }
+
+    /**
+     * 获取默认配置
+     * <p>数据返回格式：{"success":{@code boolean}, "message":{@code String}}；
+     * 其中，成功时返回的 message 内容为：{"UUID":{@code String}, "content":{@code String(Json)}}
+     */
     public void getDefaultConfig()
     {
-        ConfigLoader.use("config.json");
-        JsonNode config = ConfigLoader.getFullJson();
-        // 将 JsonNode 转换为字符串，确保与 JFinal 的 renderJson 兼容
-        try {
-            String jsonString = objectMapper.writeValueAsString(config);
-            renderJson(jsonString);
-        } catch (Exception e) {
-            renderJson(createResult(false, "配置序列化失败: " + e.getMessage()));
+        ConfigLoader.use("0");
+        String config = ConfigLoader.getFullJson().toString();
+
+        try
+        {
+            reply(true, Map.of("UUID", "0", "content", config).toString());
+        }
+        catch (Exception e)
+        {
+            logger.error("Failed to get default config", e);
+            reply(false, "Failed to get default config, please check log to learn more");
         }
     }
 
-    /** 获取所有预设 */
+    /**
+     * 获取所有预设
+     * <p>返回数据格式：[{"UUID":{@code String}, "content":{@code String(Json)}}, {...}, ...]
+     */
     public void getAllPresets()
     {
-        renderJson(DBManager.getAllPresets());
+        renderJson(DBManager.getPresetList());
     }
 
-    /** 应用预设，需要传入预设名 name */
+    /**
+     * 应用预设，需要传入预设的 UUID
+     * <p>返回数据格式：{"success":{@code boolean}, "message":{@code String}}
+     */
     public void applyPreset()
     {
-        String name = getPara("name");
-        ConfigLoader.use(name);
-        ConfigLoader.loadConfig();
-        renderJson(createResult(true, "应用预设成功"));
+        String uuid = getPara("UUID");
+        if (ConfigLoader.use(uuid))
+        {
+            reply(true, "Preset applied successfully");
+        }
+        else
+        {
+            reply(false, "Failed to apply preset(UUID:" + uuid + "), please check log to learn more");
+        }
     }
 
-    /** 按照已应用的预设开始模拟 */
+    /**
+     * 按照已应用的预设开始模拟
+     * <p>返回数据格式：{"success":{@code boolean}, "message":{@code String}}
+     */
     public void startSimulation()
-    {
-        Main.start();
-        renderJson(createResult(true, "仿真系统启动成功"));
-    }
-
-    public void savePreset()
     {
         try
         {
-            // 方法1：从请求体获取
-            String rawData = getRawData();
-            
-            // 方法2：尝试从参数获取（兼容性）
-            if (rawData == null || rawData.isEmpty())
-            {
-                rawData = getPara("fullJson");
-                System.out.println("从参数获取的数据: " + rawData);
-            }
-            
-            if (rawData == null || rawData.isEmpty())
-            {
-                System.err.println("错误：请求数据为空");
-                renderJson(createResult(false, "请求数据为空"));
-                return;
-            }
-            
-            System.out.println("最终要保存的数据: " + rawData);
-            
-            // 保存到数据库
-            DBManager.savePreset(rawData);
-            System.out.println("保存预设完成");
-            
-            renderJson(createResult(true, "保存成功"));
-        } catch (Exception e) {
-            System.err.println("保存预设异常: " + e.getMessage());
-            e.printStackTrace();
-            renderJson(createResult(false, "保存失败: " + e.getMessage()));
+            Main.start();
+            reply(true, "Simulation started successfully");
+        }
+        catch (Exception e)
+        {
+            logger.error("Failed to start simulation", e);
+            reply(false, "Failed to start simulation, please check log to learn more");
         }
     }
 
-    private Map<String, Object> createResult(boolean success, String message) {
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", success);
-        result.put("message", message);
-        return result;
+    /**
+     * 保存预设，如果是新预设，只需要传入content（内容格式同resources/config.json）；如果是已存在预设，还需传入该预设的 UUID
+     * <p>返回数据格式：{"success":{@code boolean}, "message":{@code String}}；
+     * 其中，成功时返回的 message 内容为：{"UUID":{@code String}}
+     */
+    public void savePreset()
+    {
+        String uuid = getPara("UUID");
+        boolean isNew = false;
+        if (uuid == null || uuid.isEmpty())
+        {
+            uuid = UUID.randomUUID().toString();
+            isNew = true;
+        }
+
+        try
+        {
+            String content = getPara("content");
+            if (content == null || content.isEmpty())
+            {
+                throw new NullArgumentException("content");
+            }
+
+            boolean success = DBManager.savePreset(isNew, uuid, content);
+
+            // 为防止修改了当前预设但在使用时因 UUID 相同而跳过，需要重载当前配置
+            if (!isNew && uuid == ConfigLoader.getConfigUUID() && success)
+            {
+                ConfigLoader.use(uuid, true);
+            }
+
+            reply(success, Map.of("UUID", uuid).toString());
+        }
+        catch (Exception e)
+        {
+            logger.error("Failed to save preset(UUID:{})", uuid, e);
+            reply(false, "Failed to save preset, please check log to learn more");
+        }
     }
 }

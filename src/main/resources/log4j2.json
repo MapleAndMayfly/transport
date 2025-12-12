@@ -12,7 +12,7 @@
         },
         {
           "name": "LOG_PATTERN",
-          "value": "[%d{HH:mm:ss.SSS}] [%5level | %logger{36}] %msg%n"
+          "value": "[%d{HH:mm:ss.SSS}] [%5level | %logger{1}] %msg%n"
         },
         {
           "name": "LOG_LEVEL",
@@ -47,7 +47,8 @@
         "filePattern": "${LOG_DIR}/%d{yyyy-MM-dd}-%i.log.gz",
         "PatternLayout":
         {
-          "pattern": "${LOG_PATTERN}"
+          "pattern": "${LOG_PATTERN}",
+          "header": "App log starts. Date: %d{yyyy-MM-dd}%n"
         },
         "Filters":
         {
