@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.jfinal.core.JFinal;
+
 import com.tsAdmin.common.ConfigLoader;
 import com.tsAdmin.model.DemandList;
 import com.tsAdmin.model.car.CarList;
@@ -41,5 +42,7 @@ public class Main
         // 设置为守护线程，主程序结束时自动结束
         updaterThread.setDaemon(true);
         updaterThread.start();
+
+        logger.info("Simulation started successfully, preset uuid: {}", ConfigLoader.getConfigUUID());
     }
 }
