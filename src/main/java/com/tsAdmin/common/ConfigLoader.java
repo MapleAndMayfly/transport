@@ -68,7 +68,7 @@ public final class ConfigLoader
             String jsonString = "";
             if (configUUID.equals("0"))
             {
-                InputStream inputStream = ConfigLoader.class.getClassLoader().getResourceAsStream(configUUID);
+                InputStream inputStream = ConfigLoader.class.getClassLoader().getResourceAsStream("config.json");
                 if (inputStream == null) throw new FileNotFoundException("Default config file not found!");
 
                 jsonString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
