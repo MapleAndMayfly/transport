@@ -1,4 +1,4 @@
-package com.tsAdmin.model;
+package com.tsAdmin.model.demand;
 
 import java.util.HashMap;
 import java.util.List;
@@ -7,10 +7,11 @@ import java.util.Map;
 
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.control.DBManager;
-import com.tsAdmin.model.Product.ProductType;
 import com.tsAdmin.model.producer.ProducerManager;
 import com.tsAdmin.model.processor.ProcessorManager;
 import com.tsAdmin.model.producer.Producer;
+import com.tsAdmin.model.Product;
+import com.tsAdmin.model.ProductType;
 import com.tsAdmin.model.processor.Processor;
 
 public class DemandList
@@ -57,7 +58,7 @@ public class DemandList
         for (; num > 0; num--)
         {
             // 随机生成一个产品
-            ProductType type = Product.ProductType.getRandType();
+            ProductType type = null; // TODO: ProductType.getRandType();
 
             //根据产品类型选择起终点
             Producer producer = ProducerManager.getRandProducer(type);

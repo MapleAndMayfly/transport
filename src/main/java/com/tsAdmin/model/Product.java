@@ -1,27 +1,8 @@
 package com.tsAdmin.model;
 
-import java.util.Random;
-
 /** 产品 */
 public class Product
 {
-    /** 货物类型 */
-    public static enum ProductType
-    {
-        WOOD,           // 木材
-        STEEL,          // 钢材
-        PHARMACEUTICAL; // 药材
-
-        private static final Random RANDOM = new Random();
-        /** 获取随机产品类型 */
-        public static ProductType getRandType()
-        {
-            ProductType[] types = ProductType.values();
-            int idx = RANDOM.nextInt(types.length);
-            return types[idx];
-        }
-    }
-
     private final ProductType type;
     private int quantity;
     private int volume;

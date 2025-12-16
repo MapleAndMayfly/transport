@@ -1,4 +1,6 @@
-target/
 .vscode/
-key.js
+target/
 logs/
+session_data/
+
+key.js

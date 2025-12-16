@@ -101,7 +101,7 @@ public class ConfController extends Controller
         boolean isNew = false;
         if (uuid == null || uuid.isEmpty())
         {
-            uuid = UUID.randomUUID().toString();
+            uuid = UUID.randomUUID().toString().replace("-", "");
             isNew = true;
         }
 

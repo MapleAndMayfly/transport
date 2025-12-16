@@ -1,17 +1,26 @@
 package com.tsAdmin.model.processor;
 
 import com.tsAdmin.common.Coordinate;
-import com.tsAdmin.model.Manufacturer;
+import com.tsAdmin.model.ProductType;
 
-/** 加工厂类，是所有加工厂的父类 */
-public abstract class Processor extends Manufacturer
+/** 加工厂类 */
+public class Processor
 {
-    protected Processor(String uuid, String name, Coordinate position)
+    private String uuid;
+    private String name;
+    private ProductType type;
+    private Coordinate position;
+
+    public Processor(String uuid, String name, ProductType type, Coordinate position)
     {
-        super(uuid, name, position);
+        this.uuid = uuid;
+        this.name = name;
+        this.type = type;
+        this.position = position;
     }
 
-    //Getter
-    public String getProcessorName() { return name; }
+    public String getUUID() { return uuid; }
+    public String getName() { return !name.isEmpty() ? name : type.getName() + "加工厂"; }
+    public ProductType getType() { return type; }
     public Coordinate getPosition() { return position; }
 }

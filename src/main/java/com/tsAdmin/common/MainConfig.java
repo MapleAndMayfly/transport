@@ -16,12 +16,11 @@ public class MainConfig extends JFinalConfig
     @Override
     public void configConstant(Constants me)
     {
-        PropKit.use("config.properties");
-        me.setDevMode(false);   // PropKit.getBoolean("devMode", false));
+        PropKit.use("sql.properties");
+        // me.setDevMode(false);
         // me.setError404View("/common/404.html");
         // me.setError500View("/common/500.html");
         me.setViewType(ViewType.FREE_MARKER);
-        
     }
 
     /** 配置路由 */
@@ -38,9 +37,14 @@ public class MainConfig extends JFinalConfig
     public void configPlugin(Plugins me)
     {
         // 配置 Druid 数据库连接池插件
-        DruidPlugin druidPlugin = createDruidPlugin(PropKit.getBoolean("devMode", false));
+        DruidPlugin druidPlugin = new DruidPlugin(
+            PropKit.get("jdbcUrl"),
+            PropKit.get("user"),
+            PropKit.get("password")
+        );
+
         me.add(druidPlugin);
-        
+
         // 配置 ActiveRecord 插件
         ActiveRecordPlugin arp = new ActiveRecordPlugin(druidPlugin);
         me.add(arp);
@@ -56,14 +60,4 @@ public class MainConfig extends JFinalConfig
 
     @Override
     public void configEngine(Engine arg0) {}
-
-    private DruidPlugin createDruidPlugin(boolean isDev)
-    {
-        String head = isDev ? "dev_" : "";
-        return new DruidPlugin(
-            PropKit.get(head + "jdbcUrl"),
-            PropKit.get(head + "user"),
-            PropKit.get(head + "password")
-        );
-    }
 }

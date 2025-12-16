@@ -4,19 +4,14 @@ import java.util.Map;
 
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.control.DBManager;
-import com.tsAdmin.model.Product.ProductType;
+import com.tsAdmin.model.ProductType;
 
 public class ProducerManager
 {
-    private static final Map<ProductType, String> typeStr = Map.of(
-        ProductType.PHARMACEUTICAL, "pharmaProducer",
-        ProductType.STEEL, "steelProducer",
-        ProductType.WOOD, "woodProducer"
-    );
-
     public static Producer getRandProducer(ProductType type)
     {
-        Map<String, String> data = DBManager.getRandPoi(typeStr.get(type));
+        String typeStr = type.toString().toLowerCase() + "Producer";
+        Map<String, String> data = DBManager.getRandPoi(typeStr);   // TODO
 
         if (data != null)
         {
@@ -25,19 +20,8 @@ public class ProducerManager
             double lat = Double.parseDouble(data.get("lat"));
             double lon = Double.parseDouble(data.get("lon"));
 
-            return factory(type, uuid, name, new Coordinate(lat, lon));
+            return new Producer(uuid, name, type, new Coordinate(lat, lon));
         }
         else throw new RuntimeException("数据库中没找到生产厂");
-    }
-
-    private static Producer factory(ProductType type, String uuid, String name, Coordinate coordinate) 
-    {
-        return switch (type)
-        {
-            case WOOD -> new WoodProducer(uuid, name, coordinate);
-            case STEEL -> new SteelProducer(uuid, name, coordinate);
-            case PHARMACEUTICAL -> new PharmaceuticalProducer(uuid, name, coordinate);
-            default -> null;
-        };
     }
 }

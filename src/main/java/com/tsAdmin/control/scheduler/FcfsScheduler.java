@@ -5,10 +5,10 @@ import java.util.List;
 
 import com.tsAdmin.common.PathNode;
 import com.tsAdmin.model.Assignment;
-import com.tsAdmin.model.Demand;
-import com.tsAdmin.model.DemandList;
 import com.tsAdmin.model.car.Car;
 import com.tsAdmin.model.car.CarList;
+import com.tsAdmin.model.demand.Demand;
+import com.tsAdmin.model.demand.DemandList;
 
 /**
  * 先来先服务算法调度器

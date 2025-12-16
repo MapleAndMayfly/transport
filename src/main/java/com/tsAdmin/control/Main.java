@@ -6,8 +6,8 @@ import org.apache.logging.log4j.Logger;
 import com.jfinal.core.JFinal;
 
 import com.tsAdmin.common.ConfigLoader;
-import com.tsAdmin.model.DemandList;
 import com.tsAdmin.model.car.CarList;
+import com.tsAdmin.model.demand.DemandList;
 
 public class Main
 {

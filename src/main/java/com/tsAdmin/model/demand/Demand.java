@@ -1,7 +1,8 @@
-package com.tsAdmin.model;
+package com.tsAdmin.model.demand;
 
 import com.tsAdmin.common.Coordinate;
-import com.tsAdmin.model.Product.ProductType;;
+import com.tsAdmin.model.Product;
+import com.tsAdmin.model.ProductType;
 
 /** 需求 */
 public class Demand
