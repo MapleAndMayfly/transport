@@ -2,10 +2,10 @@ package com.tsAdmin.control.scheduler;
 
 import com.tsAdmin.common.PathNode;
 import com.tsAdmin.model.Assignment;
-import com.tsAdmin.model.Demand;
-import com.tsAdmin.model.DemandList;
 import com.tsAdmin.model.car.Car;
 import com.tsAdmin.model.car.CarList;
+import com.tsAdmin.model.demand.Demand;
+import com.tsAdmin.model.demand.DemandList;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,8 +1,8 @@
 package com.tsAdmin.control;
 
-import com.tsAdmin.model.DemandList;
 import com.tsAdmin.common.ConfigLoader;
 import com.tsAdmin.control.scheduler.*;
+import com.tsAdmin.model.demand.DemandList;
 
 public class DataUpdater implements Runnable
 {

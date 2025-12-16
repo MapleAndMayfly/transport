@@ -4,44 +4,37 @@ import java.util.UUID;
 import java.util.Random;
 
 import com.tsAdmin.common.Coordinate;
-import com.tsAdmin.model.Demand;
-import com.tsAdmin.model.Manufacturer;
 import com.tsAdmin.model.Product;
-import com.tsAdmin.model.Product.ProductType;
+import com.tsAdmin.model.ProductType;
+import com.tsAdmin.model.demand.Demand;
 import com.tsAdmin.model.processor.Processor;
 
-/** 生产厂类，是所有生产厂的父类 */
-public abstract class Producer extends Manufacturer
+/** 生产厂类 */
+public class Producer
 {
     protected static final Random RANDOM = new Random();
 
-    protected Producer(String uuid, String name, Coordinate position)
-    {
-        super(uuid, name, position);
-    }
+    private String uuid;
+    private String name;
+    private ProductType type;
+    private Coordinate position;
 
-    protected abstract int getMinDensity();
-    protected abstract int getMaxDensity();
-    protected abstract int getMinQuantity();
-    protected abstract int getMaxQuantity();
+    protected Producer(String uuid, String name, ProductType type, Coordinate position)
+    {
+        this.uuid = uuid;
+        this.name = name;
+        this.type = type;
+        this.position = position;
+    }
 
     public Demand createDemand(ProductType type, Processor processor)
     {
+        // FIXME: 已无法运行，需要修改
         // 质量按吨生成，按千克存储和计算
-        int quantity = getRandQuantity() * 200;
-        Product product = new Product(type, quantity, getRandVolume(quantity));
+        int quantity = 200;
+        Product product = new Product(type, quantity, 0);
         String uuid = UUID.randomUUID().toString().replace("-", "");
 
         return new Demand(uuid, position, processor.getPosition(), product);
-    }
-
-    private int getRandQuantity()
-    {
-        return RANDOM.nextInt(getMinQuantity(), getMaxQuantity() + 1);
-    }
-    private int getRandVolume(int quantity)
-    {
-        int density = RANDOM.nextInt(getMinDensity(), getMaxDensity() + 1);
-        return quantity / density;
     }
 }

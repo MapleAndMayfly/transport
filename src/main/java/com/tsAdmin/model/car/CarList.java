@@ -10,7 +10,6 @@ import com.tsAdmin.common.ConfigLoader;
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.control.DBManager;
 import com.tsAdmin.model.car.Car.CarState;
-import com.tsAdmin.model.car.Car.CarType;
 
 public class CarList
 {
@@ -27,40 +26,23 @@ public class CarList
 
     public static void init()
     {
+        carList.clear();
+
         int carNum = ConfigLoader.getInt("CarList.car_num", 100);
-        /* FIXME: 改为查看车辆数，以避免车辆不足的情况发生。
-         * 逻辑大致为：若多则只取所需；若少则增加车辆
-         * if (DBManager.getCount("car") < carNum) {...} */
-        if (DBManager.isTableEmpty("car"))
+        int realNum = (int)DBManager.getCount("car");
+
+        if (realNum < carNum)
         {
-            for (int i = 0; i < carNum; i++)
+            for (int i = 0; i < carNum - realNum; i++)
             {
                 String uuid = UUID.randomUUID().toString().replace("-", "");
-                CarType carType = null;
-                int maxLoad, maxVolume;
 
                 int loadIdx = RANDOM.nextInt(LOADS.length);
                 int volumeIdx = RANDOM.nextInt(VOLUMES.length);
-                if (i <= 0.6 * carNum)
-                {
-                    carType = CarType.COMMON;
-                    maxLoad = getLoad(loadIdx);
-                    maxVolume = getVolume(volumeIdx);
-                }
-                else if (i <= 0.8 * carNum)
-                {
-                    carType = CarType.INSULATED_VAN;
-                    maxLoad = getLoad(loadIdx);
-                    maxVolume = getVolume(volumeIdx);
-                }
-                else
-                {
-                    carType = CarType.OVERSIZED;
-                    maxLoad = getLoad(LOADS.length - 1);
-                    maxVolume = getVolume(VOLUMES.length - 1);
-                }
+                int maxLoad = getLoad(loadIdx);
+                int maxVolume = getVolume(volumeIdx);
 
-                Car car = new Car(uuid, carType, maxLoad, maxVolume, new Coordinate(getNaturalRandomLocation()));
+                Car car = new Car(uuid, maxLoad, maxVolume, new Coordinate(getRandomLocation()));
                 DBManager.saveCar(car);
             }
         }
@@ -69,13 +51,12 @@ public class CarList
         for (Map<String, Object> carData : dataSet)
         {
             String uuid = carData.get("UUID").toString();
-            CarType carType = CarType.valueOf(carData.get("type").toString());
             int maxLoad = (int)carData.get("maxload");
             int maxVolume = (int)carData.get("maxvolume");
             double lat = (double)carData.get("lat");
             double lon = (double)carData.get("lon");
 
-            Car car = new Car(uuid, carType, maxLoad, maxVolume, new Coordinate(lat, lon));
+            Car car = new Car(uuid, maxLoad, maxVolume, new Coordinate(lat, lon));
 
             // 两次setState: 第一次将上一状态set为currState，第二次set会自动将其转移至prevState
             car.setState(CarState.AVAILABLE);
@@ -88,19 +69,10 @@ public class CarList
     }
 
     /**
-     * 生成随机车辆
-     * @param num 生成数
-     */
-    public static void generateCar(int num)
-    {
-        // TODO: 封装车辆生成函数，以适配存在车辆但数量不足的情况
-    }
-
-    /**
      * 生成随机方位点
      * @return 随机方位点
      */
-    private static final Coordinate getNaturalRandomLocation()
+    private static Coordinate getRandomLocation()
     {
         // 最大半径约2公里
         double maxRadius = 0.12;
@@ -118,9 +90,9 @@ public class CarList
         );
     }
 
-    /** 彩蛋: 圆周分布 */
+    /** 圆周分布 */
     @SuppressWarnings("unused")
-    private static final Coordinate getCircularLocation(int i)
+    private static Coordinate getCircularLocation(int i)
     {
         // 分布半径
         double radius = 1;

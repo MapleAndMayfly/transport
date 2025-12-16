@@ -9,28 +9,11 @@ import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.common.PathNode;
 import com.tsAdmin.common.Timer;
 import com.tsAdmin.control.scheduler.Scheduler;
-import com.tsAdmin.model.Demand;
+import com.tsAdmin.model.demand.Demand;
 
 /** 车辆 */
 public class Car
 {
-    /** 车辆类型 */
-    public static enum CarType
-    {
-        /** 普通车 */
-        COMMON,
-        /** 保温车(运输食品/医药) */
-        INSULATED_VAN,
-        /** 危险品车 */
-        DANGEROUS,
-        /** 超大车 */
-        OVERSIZED,
-        /** 油罐车 */
-        TANKER,
-        /** 减震车辆（运送精密仪器，例如卫星，导弹，高端服务器等） */
-        SHOCK_ABSORBER
-    }
-
     /** 车辆状态 */
     public static enum CarState
     {
@@ -60,7 +43,6 @@ public class Car
     private String uuid;                                // 车辆唯一标识符
     private int maxLoad, maxVolume;                     // 车辆核载量
     private int load, volume;                           // 车辆当前载重量
-    private CarType carType;                            // 车辆类型
     private Coordinate position;                        // 车辆当前位置
     private List<PathNode> nodeList = new ArrayList<>();// 车辆订单路径列表
     private CarState currState;                         // 当前车辆状态
@@ -76,16 +58,15 @@ public class Car
      */
     public Car(Car others)
     {
-        this(others.uuid, others.carType, others.maxLoad, others.maxVolume, others.position);
+        this(others.uuid, others.maxLoad, others.maxVolume, others.position);
         this.load = others.load;
         this.volume = others.volume;
     }
 
     /** 车辆构造函数 */
-    public Car(String uuid, CarType carType, int maxLoad, int maxVolume, Coordinate position)
+    public Car(String uuid, int maxLoad, int maxVolume, Coordinate position)
     {
         this.uuid = uuid;
-        this.carType = carType;
         this.maxLoad = maxLoad;
         this.maxVolume = maxVolume;
         this.position = position;
@@ -107,7 +88,6 @@ public class Car
 
     // Getter
     public String getUUID() { return uuid; }
-    public CarType getType() { return carType; }
     public int getMaxLoad() { return maxLoad; }
     public int getMaxVolume() { return maxVolume; }
     public int getLoad() { return load; }

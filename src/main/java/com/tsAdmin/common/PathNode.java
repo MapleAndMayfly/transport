@@ -1,6 +1,6 @@
 package com.tsAdmin.common;
 
-import com.tsAdmin.model.Demand;
+import com.tsAdmin.model.demand.Demand;
 
 /** 车辆路径点 */
 public class PathNode

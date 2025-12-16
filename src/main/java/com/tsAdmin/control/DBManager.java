@@ -9,9 +9,13 @@ import org.apache.logging.log4j.Logger;
 
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.Db;
+<<<<<<< HEAD
 
 import com.tsAdmin.model.Demand;
+=======
+>>>>>>> 90ea77e054148d29c709a0a4b7491a7702cf5233
 import com.tsAdmin.model.car.Car;
+import com.tsAdmin.model.demand.Demand;
 
 public class DBManager
 {
@@ -303,7 +307,6 @@ public class DBManager
     {
         Record carRecord = new Record();
         carRecord.set("UUID", car.getUUID())
-                 .set("type", car.getType().toString())
                  .set("maxLoad", car.getMaxLoad())
                  .set("maxVolume", car.getMaxVolume())
                  .set("location_lat", car.getPosition().lat)
