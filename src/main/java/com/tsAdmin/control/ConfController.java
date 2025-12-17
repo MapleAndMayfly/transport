@@ -7,10 +7,9 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
 import com.jfinal.core.Controller;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.tsAdmin.common.ConfigLoader;
-
-import freemarker.template.utility.NullArgumentException;
 
 /**
  * 配置控制器
@@ -19,6 +18,7 @@ import freemarker.template.utility.NullArgumentException;
 public class ConfController extends Controller
 {
     private static final Logger logger = LogManager.getLogger(ConfController.class);
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private void reply(boolean success, String message)
     {
@@ -37,7 +37,7 @@ public class ConfController extends Controller
 
         try
         {
-            reply(true, Map.of("UUID", "0", "content", config).toString());
+            reply(true, objectMapper.writeValueAsString(Map.of("UUID", "0", "content", config)));
         }
         catch (Exception e)
         {
@@ -110,7 +110,7 @@ public class ConfController extends Controller
             String content = getPara("content");
             if (content == null || content.isEmpty())
             {
-                throw new NullArgumentException("content");
+                throw new RuntimeException("Argument [content] cannot be null or empty!");
             }
 
             boolean success = DBManager.savePreset(isNew, uuid, content);
@@ -121,7 +121,7 @@ public class ConfController extends Controller
                 ConfigLoader.use(uuid, true);
             }
 
-            reply(success, Map.of("UUID", uuid).toString());
+            reply(success, objectMapper.writeValueAsString(Map.of("UUID", uuid)));
         }
         catch (Exception e)
         {
