@@ -9,13 +9,8 @@ import org.apache.logging.log4j.Logger;
 
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.Db;
-<<<<<<< HEAD
-
+import com.tsAdmin.model.Car;
 import com.tsAdmin.model.Demand;
-=======
->>>>>>> 90ea77e054148d29c709a0a4b7491a7702cf5233
-import com.tsAdmin.model.car.Car;
-import com.tsAdmin.model.demand.Demand;
 
 public class DBManager
 {
@@ -78,11 +73,11 @@ public class DBManager
      * @return 所有该类型 POI 数据的列表，每一条数据包含 id, name, location_lat, location_lon
      * @throws IllegalAgumentException 如果传入的POI类型未定义
      */
-    public static List<Map<String, Object>> getPoiData(String type)
+    public static List<Map<String, Object>> getPoiList(String type)
     {
         try
         {
-            List<Map<String, Object>> poiData = new ArrayList<>();
+            List<Map<String, Object>> poiList = new ArrayList<>();
             String table = POI_TABLES.get(type);
             if (table == null) throw new IllegalArgumentException("Invalid table type: " + type);
 
@@ -99,12 +94,12 @@ public class DBManager
                         "lat", record.get("location_lat"),
                         "lon", record.get("location_lon")
                     );
-                    poiData.add(element);
+                    poiList.add(element);
                 }
             }
 
             logger.trace("Got POI list({} total) form SQL table: {}", rawData != null ? rawData.size() : 0, table);
-            return poiData;
+            return poiList;
         }
         catch (Exception e)
         {
@@ -113,11 +108,11 @@ public class DBManager
         }
     }
 
-    public static List<Map<String, String>> getDemandData()
+    public static List<Map<String, String>> getDemandList()
     {
         try
         {
-            List<Map<String, String>> demandData = new ArrayList<>();
+            List<Map<String, String>> demandList = new ArrayList<>();
             String sql = "SELECT UUID, origin_lat, origin_lon, destination_lat, destination_lon, type, quantity, volume FROM demand";
             List<Record> rawData = Db.find(sql);
             
@@ -135,12 +130,12 @@ public class DBManager
                         "quantity", record.get("quantity").toString(),
                         "volume", record.get("volume").toString()
                     );
-                    demandData.add(element);
+                    demandList.add(element);
                 }
             }
 
             logger.trace("Got demand list({} total) from SQL", rawData != null ? rawData.size() : 0);
-            return demandData;
+            return demandList;
         }
         catch (Exception e)
         {
@@ -149,11 +144,11 @@ public class DBManager
         }
     }
 
-    public static List<Map<String, Object>> getCarData()
+    public static List<Map<String, Object>> getCarList()
     {
         try
         {
-            List<Map<String, Object>> carData = new ArrayList<>();
+            List<Map<String, Object>> carList = new ArrayList<>();
             String sql = "SELECT UUID, type, maxload, maxvolume, location_lat, location_lon FROM car";
             List<Record> rawData = Db.find(sql);
 
@@ -169,44 +164,16 @@ public class DBManager
                         "lat", record.get("location_lat"),
                         "lon", record.get("location_lon")
                     );
-                    carData.add(element);
+                    carList.add(element);
                 }
             }
 
             logger.trace("Got car list({} total) from SQL", rawData != null ? rawData.size() : 0);
-            return carData;
+            return carList;
         }
         catch (Exception e)
         {
             logger.error("Failed to get car list from SQL", e);
-            return null;
-        }
-    }
-
-    public static String getPreset(String uuid)
-    {
-        try
-        {
-            String sql = "SELECT content FROM preset WHERE UUID = ? LIMIT 1";
-            Record record = Db.findFirst(sql, uuid);
-
-            if (record != null)
-            {
-                String content = record.getStr("content");
-                int length = content != null ? content.length() : 0;
-
-                logger.trace("Got preset(UUID:{}) from SQL, content length: {}", uuid, length);
-                return content;
-            }
-            else
-            {
-                logger.warn("Preset(UUID:{}) not found, null returned", uuid);
-                return null;
-            }
-        }
-        catch (Exception e)
-        {
-            logger.error("Failed to get preset(UUID:{}) from SQL", uuid, e);
             return null;
         }
     }
@@ -240,6 +207,70 @@ public class DBManager
             logger.error("Failed to get preset list from SQL", e);
             return null;
         }
+    }
+
+    public static String getPreset(String uuid)
+    {
+        try
+        {
+            String sql = "SELECT content FROM preset WHERE UUID = ? LIMIT 1";
+            Record record = Db.findFirst(sql, uuid);
+
+            if (record != null)
+            {
+                String content = record.getStr("content");
+                int length = content != null ? content.length() : 0;
+
+                logger.trace("Got preset(UUID:{}) from SQL, content length: {}", uuid, length);
+                return content;
+            }
+            else
+            {
+                logger.warn("Preset(UUID:{}) not found, null returned", uuid);
+                return null;
+            }
+        }
+        catch (Exception e)
+        {
+            logger.error("Failed to get preset(UUID:{}) from SQL", uuid, e);
+            return null;
+        }
+    }
+
+    /**
+     * 保存订单到数据库
+     * @param demand 要保存的订单
+     * @return 此次保存成功与否
+     */
+    public static boolean saveDemand(Demand demand)
+    {
+        Record demandRecord = new Record();
+        demandRecord.set("UUID", demand.getUUID())
+                    .set("origin_lat", demand.getOrigin().lat)
+                    .set("origin_lon", demand.getOrigin().lon)
+                    .set("destination_lat",demand.getDestination().lat)
+                    .set("destination_lon", demand.getDestination().lon)
+                    .set("type", demand.getType().name())
+                    .set("quantity",demand.getQuantity())
+                    .set("volume", demand.getVolume());
+        return Db.save("demand", demandRecord);
+    }
+
+    /**
+     * 保存车辆到数据库
+     * <p><i>仅在初始化车辆数不足时调用</i>
+     * @param car 要保存的车辆
+     * @return 此次保存成功与否
+     */
+    public static boolean saveCar(Car car)
+    {
+        Record carRecord = new Record();
+        carRecord.set("UUID", car.getUUID())
+                 .set("maxLoad", car.getMaxLoad())
+                 .set("maxVolume", car.getMaxVolume())
+                 .set("location_lat", car.getPosition().lat)
+                 .set("location_lon", car.getPosition().lon);
+        return Db.save("car", carRecord);
     }
 
     /**
@@ -278,40 +309,22 @@ public class DBManager
         }
     }
 
-    /**
-     * 保存订单到数据库
-     * @param demand 要保存的订单
-     * @return 此次保存成功与否
-     */
-    public static boolean saveDemand(Demand demand)
+    public static boolean rmvPreset(String uuid)
     {
-        Record demandRecord = new Record();
-        demandRecord.set("UUID", demand.getUUID())
-                    .set("origin_lat", demand.getOrigin().lat)
-                    .set("origin_lon", demand.getOrigin().lon)
-                    .set("destination_lat",demand.getDestination().lat)
-                    .set("destination_lon", demand.getDestination().lon)
-                    .set("type", demand.getType().name())
-                    .set("quantity",demand.getQuantity())
-                    .set("volume", demand.getVolume());
-        return Db.save("demand", demandRecord);
-    }
+        try
+        {
+            boolean success = false;
+            String sql = "DELETE FROM preset WHERE UUID = ?";
+            success = Db.delete(sql, uuid) > 0;
 
-    /**
-     * 保存车辆到数据库
-     * <p><i>仅在初始化车辆数不足时调用</i>
-     * @param car 要保存的车辆
-     * @return 此次保存成功与否
-     */
-    public static boolean saveCar(Car car)
-    {
-        Record carRecord = new Record();
-        carRecord.set("UUID", car.getUUID())
-                 .set("maxLoad", car.getMaxLoad())
-                 .set("maxVolume", car.getMaxVolume())
-                 .set("location_lat", car.getPosition().lat)
-                 .set("location_lon", car.getPosition().lon);
-        return Db.save("car", carRecord);
+            logger.trace("Removed preset(UUID:{}), success status: {}", uuid, success);
+            return success;
+        }
+        catch (Exception e)
+        {
+            logger.error("Failed to remove preset(UUID:{})", uuid, e);
+            return false;
+        }
     }
 
     /* ================== 以下内容会导致模拟时无法保证情况相同，暂时废弃 ================== */
@@ -354,7 +367,7 @@ public class DBManager
      * @return {@code true} 如果删除成功
      */
     @Deprecated
-    public static boolean deleteDemand(Demand demand)
+    public static boolean rmvDemand(Demand demand)
     {
         try
         {

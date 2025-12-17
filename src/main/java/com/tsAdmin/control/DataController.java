@@ -13,9 +13,9 @@ import com.jfinal.core.Controller;
 import com.jfinal.kit.JsonKit;
 
 import com.tsAdmin.common.PathNode;
-import com.tsAdmin.model.car.Car;
-import com.tsAdmin.model.car.CarList;
-import com.tsAdmin.model.car.CarStatistics;
+import com.tsAdmin.control.manager.CarManager;
+import com.tsAdmin.model.Car;
+import com.tsAdmin.model.CarStatistics;
 
 /**
  * 数据控制器
@@ -32,7 +32,7 @@ public class DataController extends Controller
     public void getPoiData()
     {
         String type = getPara("type");
-        List<Map<String, Object>> dataList = DBManager.getPoiData(type);
+        List<Map<String, Object>> dataList = DBManager.getPoiList(type);
         renderJson(JsonKit.toJson(dataList));
     }
 
@@ -42,13 +42,13 @@ public class DataController extends Controller
      */
     public void getCarData()
     {
-        List<Map<String, Object>> posList = DBManager.getCarData();
+        List<Map<String, Object>> posList = DBManager.getCarList();
         renderJson(JsonKit.toJson(posList));
     }
 
     /**
      * 获取仪表盘数据
-     * TODO: 可优化
+     * TODO: 修改仪表盘数据获取
      */
     public void getDashboardData()
     {
@@ -57,7 +57,7 @@ public class DataController extends Controller
 
         try
         {
-            for(Car car : CarList.carList.values())
+            for(Car car : CarManager.carList.values())
             {
                 CarStatistics statistics = car.getStatistics();
                 Map<String, String> data = new HashMap<>();
@@ -100,7 +100,7 @@ public class DataController extends Controller
     public void getDestination()
     {
         String uuid = getPara("UUID");
-        Car car = CarList.carList.get(uuid);
+        Car car = CarManager.carList.get(uuid);
         Map<String, Double> dest = null;
 
         // 车辆计时器滴答一次并在计时器归零时进行车辆状态转换

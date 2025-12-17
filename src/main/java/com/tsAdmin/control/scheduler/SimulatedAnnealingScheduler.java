@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Random;
 
 import com.tsAdmin.common.PathNode;
+import com.tsAdmin.control.manager.CarManager;
 import com.tsAdmin.model.Assignment;
-import com.tsAdmin.model.car.Car;
-import com.tsAdmin.model.car.CarList;
+import com.tsAdmin.model.Car;
 
 /** 
  * 模拟退火调度器
@@ -100,7 +100,7 @@ public class SimulatedAnnealingScheduler extends Scheduler
 
         // ========== 同步结果 ==========
         // 将优化后的分配方案同步回原始车辆对象
-        syncAssignmentsToCars(currAssignment, CarList.carList.values());
+        syncAssignmentsToCars(currAssignment, CarManager.carList.values());
         
         return currAssignment;
     }

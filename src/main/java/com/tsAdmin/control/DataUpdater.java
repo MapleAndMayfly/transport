@@ -1,8 +1,8 @@
 package com.tsAdmin.control;
 
 import com.tsAdmin.common.ConfigLoader;
+import com.tsAdmin.control.manager.DemandManager;
 import com.tsAdmin.control.scheduler.*;
-import com.tsAdmin.model.demand.DemandList;
 
 public class DataUpdater implements Runnable
 {
@@ -45,7 +45,7 @@ public class DataUpdater implements Runnable
                 lastUpdate = currentTime;
 
                 // 每周期调用以下内容
-                DemandList.generateDemand(DEMAND_PER_CYCLE);
+                DemandManager.generateDemand(DEMAND_PER_CYCLE);
                 scheduler.schedule();
             }
         }

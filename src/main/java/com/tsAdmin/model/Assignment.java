@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.tsAdmin.common.PathNode;
-import com.tsAdmin.model.car.Car;
 
 public class Assignment
 {

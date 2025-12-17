@@ -1,30 +1,21 @@
-package com.tsAdmin.model.producer;
+package com.tsAdmin.model.poi;
 
 import java.util.UUID;
 import java.util.Random;
 
 import com.tsAdmin.common.Coordinate;
+import com.tsAdmin.model.Demand;
 import com.tsAdmin.model.Product;
 import com.tsAdmin.model.ProductType;
-import com.tsAdmin.model.demand.Demand;
-import com.tsAdmin.model.processor.Processor;
 
 /** 生产厂类 */
-public class Producer
+public class Producer extends Poi
 {
     protected static final Random RANDOM = new Random();
 
-    private String uuid;
-    private String name;
-    private ProductType type;
-    private Coordinate position;
-
-    protected Producer(String uuid, String name, ProductType type, Coordinate position)
+    public Producer(String uuid, ProductType productType, Coordinate position)
     {
-        this.uuid = uuid;
-        this.name = name;
-        this.type = type;
-        this.position = position;
+        super(uuid, productType, position);
     }
 
     public Demand createDemand(ProductType type, Processor processor)

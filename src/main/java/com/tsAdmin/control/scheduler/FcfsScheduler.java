@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.tsAdmin.common.PathNode;
+import com.tsAdmin.control.manager.CarManager;
+import com.tsAdmin.control.manager.DemandManager;
 import com.tsAdmin.model.Assignment;
-import com.tsAdmin.model.car.Car;
-import com.tsAdmin.model.car.CarList;
-import com.tsAdmin.model.demand.Demand;
-import com.tsAdmin.model.demand.DemandList;
+import com.tsAdmin.model.Car;
+import com.tsAdmin.model.Demand;
 
 /**
  * 先来先服务算法调度器
@@ -22,14 +22,14 @@ public class FcfsScheduler extends Scheduler
         List<Demand> demandsToAssign = new ArrayList<>();
 
         // 筛选出未处理过的新订单
-        for (Demand demand : DemandList.demandList.values())
+        for (Demand demand : DemandManager.demandList.values())
         {
             if (!demand.isAssigned()) demandsToAssign.add(demand);
         }
 
         for (Demand demand : demandsToAssign)
         {
-            for (Car car : CarList.carList.values())
+            for (Car car : CarManager.carList.values())
             {
                 // 只分配给无订单的空车
                 if (car.getNodeList().isEmpty() && car.getMaxLoad() >= demand.getQuantity())

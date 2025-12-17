@@ -1,4 +1,4 @@
-package com.tsAdmin.model.car;
+package com.tsAdmin.model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +9,6 @@ import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.common.PathNode;
 import com.tsAdmin.common.Timer;
 import com.tsAdmin.control.scheduler.Scheduler;
-import com.tsAdmin.model.demand.Demand;
 
 /** 车辆 */
 public class Car

@@ -6,8 +6,8 @@ import org.apache.logging.log4j.Logger;
 import com.jfinal.core.JFinal;
 
 import com.tsAdmin.common.ConfigLoader;
-import com.tsAdmin.model.car.CarList;
-import com.tsAdmin.model.demand.DemandList;
+import com.tsAdmin.control.manager.CarManager;
+import com.tsAdmin.control.manager.DemandManager;
 
 public class Main
 {
@@ -35,8 +35,8 @@ public class Main
 
     public static void start()
     {
-        CarList.init();
-        DemandList.init();
+        CarManager.init();
+        DemandManager.init();
         // 将 DataUpdater 作为独立线程运行，避免阻塞主线程
         Thread updaterThread = new Thread(updater);
         // 设置为守护线程，主程序结束时自动结束

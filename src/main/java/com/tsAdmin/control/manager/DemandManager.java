@@ -1,4 +1,4 @@
-package com.tsAdmin.model.demand;
+package com.tsAdmin.control.manager;
 
 import java.util.HashMap;
 import java.util.List;
@@ -9,12 +9,13 @@ import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.control.DBManager;
 import com.tsAdmin.model.producer.ProducerManager;
 import com.tsAdmin.model.processor.ProcessorManager;
-import com.tsAdmin.model.producer.Producer;
+import com.tsAdmin.model.Demand;
 import com.tsAdmin.model.Product;
 import com.tsAdmin.model.ProductType;
-import com.tsAdmin.model.processor.Processor;
+import com.tsAdmin.model.poi.Producer;
+import com.tsAdmin.model.poi.Processor;
 
-public class DemandList
+public class DemandManager
 {
     public static Map<String, Demand> demandList = new HashMap<>();
 
@@ -22,7 +23,7 @@ public class DemandList
     {
         if (!DBManager.isTableEmpty("demand"))
         {
-            List<Map<String, String>> records = DBManager.getDemandData();
+            List<Map<String, String>> records = DBManager.getDemandList();
             for (Map<String, String> record : records)
             {
                 String uuid = record.get("UUID");
@@ -66,7 +67,7 @@ public class DemandList
 
             // 生产需求，并把需求存入demandList与数据库当中
             Demand demand = producer.createDemand(type, processor);
-            DemandList.demandList.put(demand.getUUID(), demand);
+            DemandManager.demandList.put(demand.getUUID(), demand);
             DBManager.saveDemand(demand);
         }
     }

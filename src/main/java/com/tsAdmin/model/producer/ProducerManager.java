@@ -5,7 +5,9 @@ import java.util.Map;
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.control.DBManager;
 import com.tsAdmin.model.ProductType;
+import com.tsAdmin.model.poi.Producer;
 
+@Deprecated
 public class ProducerManager
 {
     public static Producer getRandProducer(ProductType type)
@@ -16,11 +18,10 @@ public class ProducerManager
         if (data != null)
         {
             String uuid = data.get("UUID");
-            String name = data.get("name");
             double lat = Double.parseDouble(data.get("lat"));
             double lon = Double.parseDouble(data.get("lon"));
 
-            return new Producer(uuid, name, type, new Coordinate(lat, lon));
+            return new Producer(uuid, type, new Coordinate(lat, lon));
         }
         else throw new RuntimeException("数据库中没找到生产厂");
     }

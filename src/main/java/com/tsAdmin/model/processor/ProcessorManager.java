@@ -5,7 +5,9 @@ import java.util.Map;
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.control.DBManager;
 import com.tsAdmin.model.ProductType;
+import com.tsAdmin.model.poi.Processor;
 
+@Deprecated
 public class ProcessorManager
 {
     private static final Map<ProductType, String> typeStr = Map.of(
@@ -21,11 +23,10 @@ public class ProcessorManager
         if (data != null)
         {
             String uuid = data.get("UUID");
-            String name = data.get("name");
             double lat = Double.parseDouble(data.get("lat"));
             double lon = Double.parseDouble(data.get("lon"));
 
-            return new Processor(uuid, name, type, new Coordinate(lat, lon));
+            return new Processor(uuid, type, new Coordinate(lat, lon));
         }
         else throw new RuntimeException("数据库中没找到生产厂");
     }

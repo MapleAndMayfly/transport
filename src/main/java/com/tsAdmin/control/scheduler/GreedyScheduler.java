@@ -1,11 +1,11 @@
 package com.tsAdmin.control.scheduler;
 
 import com.tsAdmin.common.PathNode;
+import com.tsAdmin.control.manager.CarManager;
+import com.tsAdmin.control.manager.DemandManager;
 import com.tsAdmin.model.Assignment;
-import com.tsAdmin.model.car.Car;
-import com.tsAdmin.model.car.CarList;
-import com.tsAdmin.model.demand.Demand;
-import com.tsAdmin.model.demand.DemandList;
+import com.tsAdmin.model.Car;
+import com.tsAdmin.model.Demand;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +23,7 @@ public class GreedyScheduler extends Scheduler
         List<Demand> demandsToAssign = new ArrayList<>();
 
         // 筛选出未处理的订单
-        for (Demand demand : DemandList.demandList.values())
+        for (Demand demand : DemandManager.demandList.values())
         {
             if (!demand.isAssigned()) demandsToAssign.add(demand);
         }
@@ -31,7 +31,7 @@ public class GreedyScheduler extends Scheduler
 
         // 有订单未处理，根据调度算法进行调度
         List<Car> carsCopy = new ArrayList<>();
-        for (Car car : CarList.carList.values()) carsCopy.add(new Car(car));
+        for (Car car : CarManager.carList.values()) carsCopy.add(new Car(car));
 
         for (Demand demand : demandsToAssign)
         {

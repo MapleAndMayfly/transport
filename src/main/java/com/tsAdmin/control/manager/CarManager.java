@@ -1,4 +1,4 @@
-package com.tsAdmin.model.car;
+package com.tsAdmin.control.manager;
 
 import java.util.HashMap;
 import java.util.List;
@@ -9,9 +9,10 @@ import java.util.UUID;
 import com.tsAdmin.common.ConfigLoader;
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.control.DBManager;
-import com.tsAdmin.model.car.Car.CarState;
+import com.tsAdmin.model.Car;
+import com.tsAdmin.model.Car.CarState;
 
-public class CarList
+public class CarManager
 {
     public static Map<String, Car> carList = new HashMap<>();
 
@@ -47,7 +48,7 @@ public class CarList
             }
         }
 
-        List<Map<String, Object>> dataSet = DBManager.getCarData();
+        List<Map<String, Object>> dataSet = DBManager.getCarList();
         for (Map<String, Object> carData : dataSet)
         {
             String uuid = carData.get("UUID").toString();
@@ -80,27 +81,13 @@ public class CarList
         double angle = RANDOM.nextDouble() * 2 * Math.PI;
         double distance = Math.sqrt(RANDOM.nextDouble()) * maxRadius;
 
-        // 计算偏移量（经度需要根据纬度调整）
+        // 计算偏移量
         double latOffset = distance * Math.sin(angle);
-        double lngOffset = distance * Math.cos(angle) ;// Math.cos(Math.toRadians(defaultLocation.lat));
+        double lngOffset = distance * Math.cos(angle) ;
 
         return new Coordinate(
             defaultLocation.lat + latOffset,
             defaultLocation.lon + lngOffset
-        );
-    }
-
-    /** 圆周分布 */
-    @SuppressWarnings("unused")
-    private static Coordinate getCircularLocation(int i)
-    {
-        // 分布半径
-        double radius = 1;
-
-        double angle = 2 * Math.PI * i / 100;
-        return new Coordinate(
-            defaultLocation.lat + radius * Math.sin(angle),
-            defaultLocation.lon + radius * Math.cos(angle)
         );
     }
 }
