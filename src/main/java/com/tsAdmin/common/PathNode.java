@@ -18,7 +18,6 @@ public class PathNode
     public Demand getDemand() { return demand; }
     public boolean isOrigin() { return isOrigin; }
 
-    // XXX:之后可以尽量使用这个方法代替外部使用的PathNode构造方法
     /**
      * 根据订单生成路径点对
      * @param demand 路径点对生成的订单目标

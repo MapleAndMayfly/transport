@@ -49,7 +49,7 @@ public class DBManager
         }
     }
 
-    // TODO: 上下游关系功能需要加载并保存所有POI，因此随机POI不应该再调用数据库，此函数应该废弃
+    @Deprecated
     public static Map<String, String> getRandPoi(String type)
     {
         String table = POI_TABLES.get(type);
@@ -98,7 +98,7 @@ public class DBManager
                 }
             }
 
-            logger.trace("Got POI list({} total) form SQL table: {}", rawData != null ? rawData.size() : 0, table);
+            logger.debug("Got POI list({} total) form SQL table: {}", rawData != null ? rawData.size() : 0, table);
             return poiList;
         }
         catch (Exception e)
@@ -134,7 +134,7 @@ public class DBManager
                 }
             }
 
-            logger.trace("Got demand list({} total) from SQL", rawData != null ? rawData.size() : 0);
+            logger.debug("Got demand list({} total) from SQL", rawData != null ? rawData.size() : 0);
             return demandList;
         }
         catch (Exception e)
@@ -168,7 +168,7 @@ public class DBManager
                 }
             }
 
-            logger.trace("Got car list({} total) from SQL", rawData != null ? rawData.size() : 0);
+            logger.debug("Got car list({} total) from SQL", rawData != null ? rawData.size() : 0);
             return carList;
         }
         catch (Exception e)
@@ -199,7 +199,7 @@ public class DBManager
                 }
             }
 
-            logger.trace("Got preset list({} total) from SQL", rawData != null ? rawData.size() : 0);
+            logger.debug("Got preset list({} total) from SQL", rawData != null ? rawData.size() : 0);
             return presets;
         }
         catch (Exception e)
@@ -221,7 +221,7 @@ public class DBManager
                 String content = record.getStr("content");
                 int length = content != null ? content.length() : 0;
 
-                logger.trace("Got preset(UUID:{}) from SQL, content length: {}", uuid, length);
+                logger.debug("Got preset(UUID:{}) from SQL, content length: {}", uuid, length);
                 return content;
             }
             else
@@ -299,7 +299,7 @@ public class DBManager
                 success = Db.update(updateSql, content, uuid) > 0;
             }
 
-            logger.trace("Saved preset(UUID:{}), success status: {}", uuid, success);
+            logger.debug("Saved preset(UUID:{}), success status: {}", uuid, success);
             return success;
         }
         catch (Exception e)
@@ -317,7 +317,7 @@ public class DBManager
             String sql = "DELETE FROM preset WHERE UUID = ?";
             success = Db.delete(sql, uuid) > 0;
 
-            logger.trace("Removed preset(UUID:{}), success status: {}", uuid, success);
+            logger.debug("Removed preset(UUID:{}), success status: {}", uuid, success);
             return success;
         }
         catch (Exception e)

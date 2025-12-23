@@ -15,9 +15,9 @@ import com.tsAdmin.common.ConfigLoader;
  * 配置控制器
  * 主要处理前端对参数配置的更新
  */
-public class ConfController extends Controller
+public class PresetController extends Controller
 {
-    private static final Logger logger = LogManager.getLogger(ConfController.class);
+    private static final Logger logger = LogManager.getLogger(PresetController.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private void reply(boolean success, String message)

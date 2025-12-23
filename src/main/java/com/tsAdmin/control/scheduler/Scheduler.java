@@ -10,13 +10,11 @@ import com.tsAdmin.model.Assignment;
 import com.tsAdmin.model.Car;
 import com.tsAdmin.model.Demand;
 
-/**
- * 调度器抽象类，作为所有调度器父类
- */
+/** 调度器抽象类，作为所有调度器父类 */
 public abstract class Scheduler
 {
     /**
-     * 调度方法，根据车辆列表与订单列表进行合理调度
+     * 调度方法，根据车辆与订单进行调度
      * @return 调度结果
      */
     abstract public List<Assignment> schedule();

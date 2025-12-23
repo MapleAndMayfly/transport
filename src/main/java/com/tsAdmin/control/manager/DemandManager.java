@@ -1,26 +1,24 @@
 package com.tsAdmin.control.manager;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.control.DBManager;
-import com.tsAdmin.model.producer.ProducerManager;
-import com.tsAdmin.model.processor.ProcessorManager;
 import com.tsAdmin.model.Demand;
 import com.tsAdmin.model.Product;
 import com.tsAdmin.model.ProductType;
-import com.tsAdmin.model.poi.Producer;
-import com.tsAdmin.model.poi.Processor;
+import com.tsAdmin.model.poi.*;
 
 public class DemandManager
 {
-    public static Map<String, Demand> demandList = new HashMap<>();
+    public static List<Demand> demandList = new ArrayList<>();
 
     public static void init()
     {
+        demandList.clear();
+
         if (!DBManager.isTableEmpty("demand"))
         {
             List<Map<String, String>> records = DBManager.getDemandList();
@@ -45,30 +43,27 @@ public class DemandManager
                 );
 
                 // 添加到 demand 列表
-                demandList.put(uuid, demand);
+                demandList.add(demand);
             }
         }
     }
 
-    /**
-     * 生成随机需求
-     * @param num 需要生成的数量
-     */
-    public static void generateDemand(int num)
+    public static void generateDemand(Product product, Poi from, Poi to)
     {
-        for (; num > 0; num--)
-        {
-            // 随机生成一个产品
-            ProductType type = null; // TODO: ProductType.getRandType();
 
-            //根据产品类型选择起终点
-            Producer producer = ProducerManager.getRandProducer(type);
-            Processor processor = ProcessorManager.getRandProcessor(type);
+        // for (; num > 0; num--)
+        // {
+        //     // 随机生成一个产品
+        //     ProductType type = null;
 
-            // 生产需求，并把需求存入demandList与数据库当中
-            Demand demand = producer.createDemand(type, processor);
-            DemandManager.demandList.put(demand.getUUID(), demand);
-            DBManager.saveDemand(demand);
-        }
+        //     //根据产品类型选择起终点
+        //     Producer producer = ProducerManager.getRandProducer(type);
+        //     Processor processor = ProcessorManager.getRandProcessor(type);
+
+        //     // 生产需求，并把需求存入demandList与数据库当中
+        //     Demand demand = processor.createDemand(type, processor);
+        //     DemandManager.demandList.put(demand.getUUID(), demand);
+        //     DBManager.saveDemand(demand);
+        // }
     }
 }

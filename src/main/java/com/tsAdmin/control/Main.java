@@ -1,5 +1,7 @@
 package com.tsAdmin.control;
 
+import java.util.Random;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -11,32 +13,35 @@ import com.tsAdmin.control.manager.DemandManager;
 
 public class Main
 {
-    public static DataUpdater updater = new DataUpdater();
+    public static Random RANDOM;
+    private static DataUpdater updater = new DataUpdater();
     private static final Logger logger = LogManager.getLogger("App");
 
     public static void main(String[] args)
     {
-        int port = ConfigLoader.getInt("Main.port", 8080);
         int updateInterval = ConfigLoader.getInt("Main.update_interval", 5);
 
         try
         {
             // 打开浏览器
-            java.awt.Desktop.getDesktop().browse(new java.net.URI("http://localhost:" + port));
+            java.awt.Desktop.getDesktop().browse(new java.net.URI("http://localhost:8080"));
         }
         catch (Exception e)
         {
             e.printStackTrace();
         }
 
-        logger.info("Server starts at http://localhost:{}", port);
-        JFinal.start("src/main/webapp", port, "/", updateInterval);
+        logger.info("Server starts at http://localhost:8080");
+        JFinal.start("src/main/webapp", 8080, "/", updateInterval);
     }
 
     public static void start()
     {
+        RANDOM = new Random(ConfigLoader.getInt("Main.random_seed"));   // TODO: -1
+
         CarManager.init();
         DemandManager.init();
+
         // 将 DataUpdater 作为独立线程运行，避免阻塞主线程
         Thread updaterThread = new Thread(updater);
         // 设置为守护线程，主程序结束时自动结束

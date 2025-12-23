@@ -23,7 +23,7 @@ public class GreedyScheduler extends Scheduler
         List<Demand> demandsToAssign = new ArrayList<>();
 
         // 筛选出未处理的订单
-        for (Demand demand : DemandManager.demandList.values())
+        for (Demand demand : DemandManager.demandList)
         {
             if (!demand.isAssigned()) demandsToAssign.add(demand);
         }

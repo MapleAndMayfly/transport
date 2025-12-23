@@ -3,20 +3,18 @@ package com.tsAdmin.control.manager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.UUID;
 
 import com.tsAdmin.common.ConfigLoader;
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.control.DBManager;
+import com.tsAdmin.control.Main;
 import com.tsAdmin.model.Car;
 import com.tsAdmin.model.Car.CarState;
 
 public class CarManager
 {
     public static Map<String, Car> carList = new HashMap<>();
-
-    private static final Random RANDOM = new Random();
 
     private static final int[] LOADS = { 2000, 3000, 5000, 8000, 10000, 15000, 20000, 25000, 30000 };
     private static final int[] VOLUMES = { 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000 };
@@ -38,8 +36,8 @@ public class CarManager
             {
                 String uuid = UUID.randomUUID().toString().replace("-", "");
 
-                int loadIdx = RANDOM.nextInt(LOADS.length);
-                int volumeIdx = RANDOM.nextInt(VOLUMES.length);
+                int loadIdx = Main.RANDOM.nextInt(LOADS.length);
+                int volumeIdx = Main.RANDOM.nextInt(VOLUMES.length);
                 int maxLoad = getLoad(loadIdx);
                 int maxVolume = getVolume(volumeIdx);
 
@@ -78,8 +76,8 @@ public class CarManager
         // 最大半径约2公里
         double maxRadius = 0.12;
 
-        double angle = RANDOM.nextDouble() * 2 * Math.PI;
-        double distance = Math.sqrt(RANDOM.nextDouble()) * maxRadius;
+        double angle = Main.RANDOM.nextDouble() * 2 * Math.PI;
+        double distance = Math.sqrt(Main.RANDOM.nextDouble()) * maxRadius;
 
         // 计算偏移量
         double latOffset = distance * Math.sin(angle);

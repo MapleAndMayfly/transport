@@ -3,11 +3,11 @@ package com.tsAdmin.model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.common.PathNode;
 import com.tsAdmin.common.Timer;
+import com.tsAdmin.control.Main;
 import com.tsAdmin.control.scheduler.Scheduler;
 
 /** 车辆 */
@@ -30,7 +30,6 @@ public class Car
         FREEZE
     }
 
-    private static final Random RANDOM = new Random();
     private static Map<CarState, Double> freezeChance = Map.of(
         CarState.AVAILABLE, 0.00,
         CarState.ORDER_TAKEN, 0.04,
@@ -124,7 +123,7 @@ public class Car
      */
     public void changeState()
     {
-        double randNum = RANDOM.nextDouble();
+        double randNum = Main.RANDOM.nextDouble();
         CarState nextState = currState;
 
         // 非冻结状态有一定几率变为冻结状态，模拟小概率事故的发生，此时当前状态的一切操作被冻结（延后）

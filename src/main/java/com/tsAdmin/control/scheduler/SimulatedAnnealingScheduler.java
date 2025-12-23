@@ -10,20 +10,7 @@ import com.tsAdmin.control.manager.CarManager;
 import com.tsAdmin.model.Assignment;
 import com.tsAdmin.model.Car;
 
-/** 
- * 模拟退火调度器
- * 
- * 算法原理：
- * 模拟退火算法是一种启发式优化算法，模拟金属冷却过程。
- * 在高温时，算法有较大概率接受劣解，避免陷入局部最优；
- * 随着温度降低，算法逐渐倾向于只接受更优的解。
- * 
- * 核心特点：
- * 1. 成对操作：同一订单的起点-终点必须成对交换或转移
- * 2. 约束检查：确保载重和体积约束始终满足
- * 3. 温度控制：通过温度参数控制接受劣解的概率
- * 4. 扰动机制：定期增加温度，防止过早收敛到局部最优
- */
+/** 模拟退火调度器 */
 public class SimulatedAnnealingScheduler extends Scheduler
 {
     private static final Random RANDOM = new Random();

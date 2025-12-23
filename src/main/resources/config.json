@@ -2,39 +2,40 @@
   "name": "Default",
   "configs":
   {
-    "Main.port":
-    {
-      "name" : "运行端口",
-      "value": 8080
-    },
     "Main.update_interval":
     {
       "name": "后端更新间隔",
+      "type": "Integer",
       "unit": "s",
-      "value": 5
+      "value": 5,
+      "range": [1, 5]
     },
     "Timer.tick_speed":
     {
       "name": "时间步进",
+      "type": "Integer",
       "unit": "min",
       "value": 30
-    },
-    "DataUpdater.demand_per_cycle":
-    {
-      "name": "订单生成速率",
-      "unit": "个/周期",
-      "value": 0
     },
     "DataUpdater.applied_scheduler":
     {
       "name": "采用的调度器",
-      "value": "Greedy"
+      "type": "Select",
+      "value": "Greedy",
+      "allow": ["Greedy", "SA", "..."]
     },
     "CarList.car_num":
     {
       "name": "模拟车辆数",
+      "type": "Integer",
       "unit": "辆",
       "value": 100
+    },
+    "Main.random_seed":
+    {
+      "name": "种子",
+      "type": "Long",
+      "value": "-1"
     }
   }
 }
