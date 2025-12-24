@@ -22,7 +22,7 @@
       "name": "采用的调度器",
       "type": "Select",
       "value": "Greedy",
-      "allow": ["Greedy", "SA", "..."]
+      "allow": ["Greedy", "SA", "FCFS"]
     },
     "CarList.car_num":
     {
@@ -31,11 +31,19 @@
       "unit": "辆",
       "value": 100
     },
+    "Producer.produce_speed":
+    {
+      "name": "生产厂库存增长速率",
+      "type": "Integer",
+      "unit": "% /周期",
+      "value": 5,
+      "range": [1, 100]
+    },
     "Main.random_seed":
     {
-      "name": "种子",
+      "name": "随机种子",
       "type": "Long",
-      "value": "-1"
+      "value": -1
     }
   }
 }

@@ -50,7 +50,6 @@ public class DemandManager
 
     public static void generateDemand(Product product, Poi from, Poi to)
     {
-
         // for (; num > 0; num--)
         // {
         //     // 随机生成一个产品
