@@ -60,6 +60,8 @@ public class PoiManager
                 default:
                     throw new IllegalArgumentException("Invalid POI type!");
             }
+
+            poi.setInQueque(true);
         }
         catch (Exception e)
         {

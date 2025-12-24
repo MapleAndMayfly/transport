@@ -5,8 +5,6 @@ import com.tsAdmin.model.ProductType;
 
 public class Producer extends Poi
 {
-    private static int produceSpeed;
-
     public Producer(String uuid, ProductType productType, Coordinate position, double stock, int maxStock)
     {
         super(uuid, productType, position, stock, maxStock);
@@ -15,9 +13,9 @@ public class Producer extends Poi
     @Override
     public void update()
     {
-        stock += produceSpeed * maxStock / 100.0;
+        stock += stockAlterSpeed * maxStock;
         if (stock > maxStock) stock = maxStock;
-    }
 
-    public static void setProduceSpeed(int speed) { produceSpeed = speed; }
+        tryMarkAvailable();
+    }
 }

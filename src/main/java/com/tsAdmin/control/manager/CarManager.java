@@ -16,12 +16,9 @@ public class CarManager
 {
     public static Map<String, Car> carList = new HashMap<>();
 
-    private static final int[] LOADS = { 2000, 3000, 5000, 8000, 10000, 15000, 20000, 25000, 30000 };
-    private static final int[] VOLUMES = { 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000 };
+    private static final int[] LOADS = { 2, 5, 8, 12, 18, 24, 30, 35 };
+    private static final int[] VOLUMES = { 12, 16, 32, 48, 64, 86, 108, 140 };
     private static final Coordinate defaultLocation = new Coordinate(30.67646, 104.10248);
-
-    public static int getLoad(int randIdx) { return LOADS[randIdx]; }
-    public static int getVolume(int randIdx) { return VOLUMES[randIdx]; }
 
     public static void init()
     {
@@ -38,8 +35,8 @@ public class CarManager
 
                 int loadIdx = Main.RANDOM.nextInt(LOADS.length);
                 int volumeIdx = Main.RANDOM.nextInt(VOLUMES.length);
-                int maxLoad = getLoad(loadIdx);
-                int maxVolume = getVolume(volumeIdx);
+                int maxLoad = LOADS[loadIdx];
+                int maxVolume = VOLUMES[volumeIdx];
 
                 Car car = new Car(uuid, maxLoad, maxVolume, new Coordinate(getRandomLocation()));
                 DBManager.saveCar(car);

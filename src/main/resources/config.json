@@ -31,9 +31,9 @@
       "unit": "辆",
       "value": 100
     },
-    "Producer.produce_speed":
+    "Poi.stock_alter_speed":
     {
-      "name": "生产厂库存增长速率",
+      "name": "兴趣点库存变化速率",
       "type": "Integer",
       "unit": "% /周期",
       "value": 5,

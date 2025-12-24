@@ -20,8 +20,6 @@ public class Main
 
     public static void main(String[] args)
     {
-        int updateInterval = ConfigLoader.getInt("Main.update_interval", 5);
-
         try
         {
             // 打开浏览器
@@ -33,13 +31,13 @@ public class Main
         }
 
         logger.info("Server starts at http://localhost:8080");
-        JFinal.start("src/main/webapp", 8080, "/", updateInterval);
+        JFinal.start("src/main/webapp", 8080, "/", 5);
     }
 
     public static void start()
     {
         RANDOM = new Random(ConfigLoader.getInt("Main.random_seed"));
-        Producer.setProduceSpeed(ConfigLoader.getInt("Producer.produce_speed"));
+        Producer.setStockAlterSpeed(ConfigLoader.getInt("Poi.stock_alter_speed"));
 
         CarManager.init();
         DemandManager.init();
