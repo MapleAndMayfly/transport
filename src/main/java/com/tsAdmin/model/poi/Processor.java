@@ -28,7 +28,5 @@ public class Processor extends Poi
         {
             logger.warn("Stock(value:{}) is larger than maxStock(value:{})", stock, maxStock);
         }
-
-        tryMarkAvailable();
     }
 }
