@@ -22,7 +22,7 @@
       "name": "采用的调度器",
       "type": "Select",
       "value": "Greedy",
-      "allow": ["Greedy", "SA", "FCFS"]
+      "allow": ["Greedy", "SA"]
     },
     "CarList.car_num":
     {
