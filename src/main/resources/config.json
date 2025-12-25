@@ -24,7 +24,7 @@
       "value": "Greedy",
       "allow": ["Greedy", "SA"]
     },
-    "CarList.car_num":
+    "CarManager.car_num":
     {
       "name": "模拟车辆数",
       "type": "Integer",
@@ -38,6 +38,14 @@
       "unit": "% /周期",
       "value": 5,
       "range": [1, 100]
+    },
+    "Poi.processing_loss":
+    {
+      "name": "工厂加工损耗",
+      "type": "Integer",
+      "unit": "%",
+      "value": 10,
+      "range": [0, 99]
     },
     "Main.random_seed":
     {
