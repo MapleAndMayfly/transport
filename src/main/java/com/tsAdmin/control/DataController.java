@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.tsAdmin.control.scheduler.MOSAScheduler;
+import com.tsAdmin.model.Assignment;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,6 +18,7 @@ import com.tsAdmin.common.PathNode;
 import com.tsAdmin.control.manager.CarManager;
 import com.tsAdmin.model.Car;
 import com.tsAdmin.model.CarStatistics;
+
 
 /**
  * 数据控制器
@@ -45,7 +48,43 @@ public class DataController extends Controller
         List<Map<String, Object>> posList = DBManager.getCarList();
         renderJson(JsonKit.toJson(posList));
     }
+    /**
+     * 接收前端目标选择信号，从 Pareto 前沿中选择最优解
+     */
+    public void selectParetoSolution() {
+        // 1. 获取前端传来的布尔数组
+        String[] objStrs = getParaValues("objectives");
+        if (objStrs == null || objStrs.length != 5) {
+            renderJson(Map.of("code", 400, "msg", "需提供5个目标的选择信号"));
+            return;
+        }
 
+        boolean[] selected = new boolean[5];
+        for (int i = 0; i < 5; i++) {
+            selected[i] = "true".equals(objStrs[i]) || "1".equals(objStrs[i]);
+        }
+
+        // 2. 获取 MOSAScheduler 实例
+        MOSAScheduler mosa = DataUpdater.getMosaScheduler();
+        if (mosa == null) {
+            renderJson(Map.of("code", 500, "msg", "MOSA 调度器未运行"));
+            return;
+        }
+
+        // 3. 执行理想点法筛选
+        List<Assignment> bestSolution = mosa.selectSolutionByObjectives(selected);
+        if (bestSolution == null || bestSolution.isEmpty()) {
+            renderJson(Map.of("code", 404, "msg", "无可用解"));
+            return;
+        }
+
+        // 4. 同步新解到车辆，并更新 CarStatistics
+        mosa.syncAssignmentsToCars(bestSolution, CarManager.carList.values());
+        mosa.updateCarStats(bestSolution); // 你已实现的方法
+
+        // 5. 返回成功
+        renderJson(Map.of("code", 200, "msg", "Pareto 解已更新"));
+    }
     /**
      * 获取仪表盘数据
      * TODO: 修改仪表盘数据获取
@@ -62,7 +101,7 @@ public class DataController extends Controller
                 CarStatistics statistics = car.getStatistics();
                 Map<String, String> data = new HashMap<>();
                 data.put("UUID", car.getUUID());
-                cycleCost += statistics.getCost();
+
 
                 // 获取 CarStatistics 类的所有 Getter
                 Method[] methods = CarStatistics.class.getMethods();
