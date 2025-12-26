@@ -10,7 +10,7 @@ import com.jfinal.core.JFinal;
 import com.tsAdmin.common.ConfigLoader;
 import com.tsAdmin.control.manager.CarManager;
 import com.tsAdmin.control.manager.DemandManager;
-import com.tsAdmin.model.poi.Producer;
+import com.tsAdmin.model.poi.Poi;
 
 public class Main
 {
@@ -37,7 +37,8 @@ public class Main
     public static void start()
     {
         RANDOM = new Random(ConfigLoader.getInt("Main.random_seed"));
-        Producer.setStockAlterSpeed(ConfigLoader.getInt("Poi.stock_alter_speed"));
+        Poi.setStockAlterSpeed(ConfigLoader.getInt("Poi.stock_alter_speed"));
+        Poi.setProcessingLoss(ConfigLoader.getInt("Poi.processing_loss"));
 
         CarManager.init();
         DemandManager.init();

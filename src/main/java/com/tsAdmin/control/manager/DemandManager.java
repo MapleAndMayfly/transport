@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.control.DBManager;
 import com.tsAdmin.model.Demand;
 import com.tsAdmin.model.Product;
@@ -25,22 +24,15 @@ public class DemandManager
             for (Map<String, String> record : records)
             {
                 String uuid = record.get("UUID");
-                double origLat = Double.parseDouble(record.get("origin_lat"));
-                double origLon = Double.parseDouble(record.get("origin_lon"));
-                double destLat = Double.parseDouble(record.get("destination_lat"));
-                double destLon = Double.parseDouble(record.get("destination_lon"));
-                ProductType type = ProductType.valueOf(record.get("type"));
                 int quantity = Integer.parseInt(record.get("quantity"));
                 int volume = Integer.parseInt(record.get("volume"));
+                ProductType type = ProductType.valueOf(record.get("type"));
+                Poi origin = PoiManager.poiList.get(record.get("origin_UUID"));
+                Poi destination = PoiManager.poiList.get(record.get("destination_UUID"));
 
                 Product product = new Product(type, quantity, volume);
 
-                Demand demand = new Demand(
-                    uuid,
-                    new Coordinate(origLat, origLon),
-                    new Coordinate(destLat, destLon),
-                    product
-                );
+                Demand demand = new Demand(uuid, origin, destination, product);
 
                 // 添加到 demand 列表
                 demandList.add(demand);

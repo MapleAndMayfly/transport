@@ -1,18 +1,19 @@
 package com.tsAdmin.model;
 
 import com.tsAdmin.common.Coordinate;
+import com.tsAdmin.model.poi.Poi;
 
 /** 需求 */
 public class Demand
 {
     private String uuid;
-    private Coordinate origin;
-    private Coordinate destination;
+    private Poi origin;
+    private Poi destination;
     private Product product;
 
     private boolean isAssigned;
 
-    public Demand(String uuid, Coordinate origin, Coordinate destination, Product product)
+    public Demand(String uuid, Poi origin, Poi destination, Product product)
     {
         this.uuid = uuid;
         this.origin = origin;
@@ -28,8 +29,8 @@ public class Demand
 
     // Getter
     public String getUUID() { return uuid; }
-    public Coordinate getOrigin() { return origin; }
-    public Coordinate getDestination() { return destination; }
+    public Coordinate getOrigin() { return origin.getPosition(); }
+    public Coordinate getDestination() { return destination.getPosition(); }
     public ProductType getType() { return product.getType(); }
     public int getQuantity() { return product.getQuantity(); }
     public int getVolume() { return product.getVolume(); }
@@ -37,6 +38,6 @@ public class Demand
 
     public int routeLength()
     {
-        return (int)Coordinate.distance(origin, destination);
+        return (int)Coordinate.distance(getOrigin(), getDestination());
     }
 }

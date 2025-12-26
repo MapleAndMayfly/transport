@@ -15,7 +15,5 @@ public class Producer extends Poi
     {
         stock += stockAlterSpeed * maxStock;
         if (stock > maxStock) stock = maxStock;
-
-        tryMarkAvailable();
     }
 }

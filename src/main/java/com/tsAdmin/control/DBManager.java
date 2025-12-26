@@ -95,7 +95,7 @@ public class DBManager
         try
         {
             List<Map<String, String>> demandList = new ArrayList<>();
-            String sql = "SELECT UUID, origin_lat, origin_lon, destination_lat, destination_lon, type, quantity, volume FROM demand";
+            String sql = "SELECT UUID, type, quantity, volume, origin_UUID, destination_UUID FROM demand";
             List<Record> rawData = Db.find(sql);
             
             if (rawData != null && !rawData.isEmpty())
@@ -104,13 +104,11 @@ public class DBManager
                 {
                     Map<String, String> element = Map.of(
                         "UUID", record.get("UUID"),
-                        "origin_lat", record.get("origin_lat").toString(),
-                        "origin_lon", record.get("origin_lon").toString(),
-                        "destination_lat", record.get("destination_lat").toString(),
-                        "destination_lon", record.get("destination_lon").toString(),
                         "type", record.get("type"),
                         "quantity", record.get("quantity").toString(),
-                        "volume", record.get("volume").toString()
+                        "volume", record.get("volume").toString(),
+                        "origin_UUID", record.get("origin_UUID").toString(),
+                        "destination_UUID", record.get("destination_UUID").toString()
                     );
                     demandList.add(element);
                 }
