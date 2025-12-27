@@ -337,4 +337,210 @@ public class DBManager
             return false;
         }
     }
+        /**根据关键字和城市搜索POI点并插入数据库 */
+    public static void insertIntoDB(String keywords) 
+	{
+        String[] cities= {"成都市","自贡市","攀枝花市","泸州市","德阳市","绵阳市","广元市","遂宁市","内江市","乐山市","南充市","眉山市","宜宾市","广安市","达州市","雅安市","巴中市","资阳市","阿坝州","甘孜州","凉山州"};
+        for(String city:cities){
+            String RequestURL="https://restapi.amap.com/v3/place/text?"
+                    + "keywords="+keywords+"&city="+city+"&offset=100&key=3a58ca26430baffeffba0a4e1698f51a&extensions=base"; 
+            String resText=HttpKit.get(RequestURL);
+            //解析并存储到数据库
+            JSONObject resOBJ=JSONObject.parseObject(resText);//把文本格式的json字符转为对象，方便取值
+            if(resOBJ.getJSONArray("pois")==null) continue;//如果没有pois数组，跳过
+            JSONArray pois=resOBJ.getJSONArray("pois");//拿到JSON里的pois数组
+            
+            String tablename = "pharmaceutical_market";
+            String tablename2 = "pharmaceutical_producer";
+            String tablename3 = "pharmaceutical_processor";
+            //pois中，数据是数组形式，用循环解析
+            for(int i=0;i<100 && i<pois.size();i++) 
+            {
+                String objString=pois.get(i).toString();//第i个对象转为字符串
+                JSONObject singleObj=JSONObject.parseObject(objString);//再把对象由String转为jsonObj
+                String locationID=singleObj.getString("id");//ID
+                String POI_pname=singleObj.get("pname").toString();//省
+                String POI_cityname=singleObj.get("cityname").toString();//市
+                String POI_location=singleObj.get("location").toString();
+                String POI_lat=POI_location.split(",")[1];//,之后的为纬度
+                String POI_lon=POI_location.split(",")[0];//,之前的为经度
+                String POI_name=singleObj.get("name").toString();//具体名称
+                //调试输出一下试试
+                System.out.println(i+"  location_ID  "+locationID+"  地点是  "+POI_name+"  纬度是  "+POI_lat+"  经度是  "+POI_lon);
+                //经过调试，可以解析到这些数据，把这些数据存放到数据库中，注意如果数据库组已经存在该地点，则不用再添加
+                try 
+                {
+                    if(!(ifexist(tablename,locationID)||ifexist(tablename2, locationID)||ifexist(tablename3, locationID))) //不存在时插入数据
+                    {
+                        //插入数据
+                        Record e_poiRecord=new Record();
+                        e_poiRecord.set("location_ID", locationID).set("pname", POI_pname).set("cityname", POI_cityname);
+                        e_poiRecord.set("location_lat",POI_lat).set("location_lon",POI_lon).set("name", POI_name);
+                        Db.save(tablename,e_poiRecord);
+                    }
+                }
+                catch(Exception e) 
+                {
+                    e.printStackTrace();  // 打印异常信息
+                }
+            }
+        }
+	}
+    /**POI点是否已存在于数据库 */
+    public static boolean ifexist(String table,String locationID) 
+	{
+        List<Record> results = Db.find("SELECT * FROM " + table + " WHERE location_id = ?", locationID);
+		// 检查结果集是否为空
+        if (!results.isEmpty()) 
+        {
+            return true;//表示已经存在
+        } else 
+        {
+            return false;//表示不存在
+        }	
+	}
+
+
+    /**
+     * 厂商类
+     */
+    private static class Supplier {
+        String id;
+        Coordinate coordinate;
+        
+        Supplier(String id, Coordinate coordinate) {
+            this.id = id;
+            this.coordinate = coordinate;
+        }
+    }
+    /**插入上游厂商ID 
+     * 虽然这种多对多的关系规范做法是建立关系表，但为了简化数据库设计，这里直接将上游供应商ID列表存储在下游表的upstream_suppliers字段中
+    */
+    public static void insert_upstream_suppliers(String downstream_table,int n)
+    {
+        Map<String, String> downstream_upstream = Map.of(
+            "pharmaceutical_market", "pharmaceutical_processor",
+            "pharmaceutical_processor", "pharmaceutical_producer",
+            "steel_market", "steel_processor",
+            "steel_processor", "steel_producer",
+            "wood_market", "wood_processor",
+            "wood_processor", "wood_producer"
+        );
+        String upstream_table = downstream_upstream.get(downstream_table);
+        if (upstream_table == null) {
+            System.err.println("错误: 找不到下游表 " + downstream_table + " 对应的上游表");
+            return;
+        }
+        
+        System.out.println("开始为 " + downstream_table + " 表匹配上游供应商，上游表: " + upstream_table);
+        
+        try {
+            // 1. 获取所有下游厂商数据
+            List<Supplier> downstreamSuppliers = getSuppliers(downstream_table);
+            System.out.println("获取到 " + downstreamSuppliers.size() + " 个下游厂商");
+            
+            // 2. 获取所有上游厂商数据
+            List<Supplier> upstreamSuppliers = getSuppliers(upstream_table);
+            System.out.println("获取到 " + upstreamSuppliers.size() + " 个上游厂商");
+            
+            // 如果上游厂商数量为0，直接返回
+            if (upstreamSuppliers.isEmpty()) {
+                System.out.println("警告: 上游表 " + upstream_table + " 中没有数据");
+                return;
+            }
+            
+            // 3. 为每个下游厂商匹配最近的n个上游厂商
+            int updatedCount = 0;
+            for (Supplier ds : downstreamSuppliers) {
+                List<String> nearestUpstreamIds = findNearestSuppliers(ds.coordinate, upstreamSuppliers, n);
+                updateDownstreamSupplier(downstream_table, ds.id, nearestUpstreamIds);
+                updatedCount++;
+                
+                // 每处理10个打印一次进度
+                if (updatedCount % 10 == 0) {
+                    System.out.println("已处理 " + updatedCount + "/" + downstreamSuppliers.size() + " 个下游厂商");
+                }
+            }
+            
+            System.out.println("完成! 共为 " + updatedCount + " 个下游厂商匹配了上游供应商");
+            
+        } catch (SQLException e) {
+            System.err.println("数据库操作失败: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    /**
+     * 获取厂商列表
+     */
+    private static List<Supplier> getSuppliers(String tableName) throws SQLException {
+        List<Supplier> suppliers = new ArrayList<>();
+        String query = "SELECT location_ID, location_lat, location_lon FROM " + tableName;
+        List<Record> rawData = Db.find(query);
+        for (Record record : rawData) {
+            String id = record.getStr("location_ID");
+            Double lat = record.getDouble("location_lat");
+            Double lon = record.getDouble("location_lon");
+            
+            // 处理可能为 null 的情况
+            if (lat == null || lon == null || lat == 0.0 && lon == 0.0) {
+                System.out.println("警告: 跳过ID=" + id + " 的无效坐标记录");
+                continue;
+            }
+            
+            suppliers.add(new Supplier(id, new Coordinate(lat, lon)));
+        }
+        
+        return suppliers;
+    }
+    /**
+     * 供应商距离类（用于优先队列）
+     */
+    private static class SupplierDistance {
+        String supplierId;
+        double distance;
+        
+        SupplierDistance(String supplierId, double distance) {
+            this.supplierId = supplierId;
+            this.distance = distance;
+        }
+    }
+    /**
+     * 查找距离最近的上游供应商
+     */
+    private static List<String> findNearestSuppliers(Coordinate target, 
+                                                      List<Supplier> upstreamSuppliers, 
+                                                      int n) {
+        // 使用优先队列（大顶堆）来维护最近的n个供应商
+        PriorityQueue<SupplierDistance> maxHeap = new PriorityQueue<>((a, b) -> 
+            Double.compare(b.distance, a.distance));
+        
+        for (Supplier us : upstreamSuppliers) {
+            double distance = Coordinate.distance(target, us.coordinate);
+            
+            if (maxHeap.size() < n) {
+                maxHeap.offer(new SupplierDistance(us.id, distance));
+            } else if (distance < maxHeap.peek().distance) {
+                maxHeap.poll(); // 移除最远的
+                maxHeap.offer(new SupplierDistance(us.id, distance));
+            }
+        }
+        
+        // 将结果转换为ID列表
+        List<String> result = new ArrayList<>();
+        while (!maxHeap.isEmpty()) {
+            result.add(0, maxHeap.poll().supplierId); // 按距离从小到大排序
+        }        
+        return result;
+    }
+    /**
+     * 更新下游厂商的上游供应商列表
+     */
+    private static void updateDownstreamSupplier(String table, String downstreamId, 
+                                                 List<String> upstreamIds) throws SQLException {
+        // 将ID列表转换为JSON数组字符串
+        String jsonString = JSONArray.toJSONString(upstreamIds);
+        
+        String updateSQL = "UPDATE " + table + " SET upstream_suppliers = ? WHERE location_ID = ?";
+        Db.update(updateSQL, jsonString, downstreamId);
+    }
 }
