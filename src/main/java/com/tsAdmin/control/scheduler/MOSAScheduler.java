@@ -1,17 +1,19 @@
-package com.tsAdmin.control.scheduler;  // 包声明：调度器控制包
+package com.tsAdmin.control.scheduler;
 
-import java.util.*;  // 导入Java工具类（List, ArrayList, Map, HashMap, Random等）
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import com.tsAdmin.common.PathNode;  // 导入路径节点类
-import com.tsAdmin.common.algorithm.multiobjective.*;  // 导入多目标优化算法包的所有类
-import com.tsAdmin.common.algorithm.multiobjective.MultiObjectiveEvaluator.ObjectiveVector;  // 导入多目标向量类
-import com.tsAdmin.control.scheduler.GreedyScheduler;
-import com.tsAdmin.model.Assignment;  // 导入分配方案模型类
+import com.tsAdmin.common.PathNode;
+import com.tsAdmin.common.algorithm.multiobjective.*;
+import com.tsAdmin.common.algorithm.multiobjective.MultiObjectiveEvaluator.ObjectiveVector;
+import com.tsAdmin.model.Assignment;
 import com.tsAdmin.model.*; 
 import com.tsAdmin.control.manager.*; 
-
-
-
 import com.tsAdmin.common.algorithm.multiobjective.DynamicNormalizer;
 import com.tsAdmin.common.algorithm.multiobjective.MultiObjectiveEvaluator;
 import com.tsAdmin.common.algorithm.multiobjective.ProbabilityAcceptance;
@@ -51,7 +53,6 @@ public class MOSAScheduler extends BaseScheduler
      * 概率接受机制：用于决定是否接受新解
      */
     private final ProbabilityAcceptance acceptance;
-    private final Random random = new Random();
     private static final int MAX_NEIGHBOR_ATTEMPTS = 20;
     
     // ========== MOSA算法参数 ==========

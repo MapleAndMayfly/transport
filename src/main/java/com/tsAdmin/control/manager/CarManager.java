@@ -25,7 +25,7 @@ public class CarManager
         carList.clear();
 
         int carNum = ConfigLoader.getInt("CarManager.car_num", 100);
-        int realNum = (int)DBManager.getCount("car");
+        int realNum = 0;    // (int)DBManager.getCount("car");
 
         if (realNum < carNum)
         {

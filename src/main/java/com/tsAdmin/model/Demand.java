@@ -24,7 +24,7 @@ public class Demand
 
     // Setter
     public void setQuantity(int quantity) { this.product.setQuantity(quantity); }
-    public void setVolume(int volume) { this.product.setVolume(volume); }
+    public void setVolume(double volume) { this.product.setVolume(volume); }
     public void setAssigned() { this.isAssigned = true; }
 
     // Getter
@@ -33,7 +33,7 @@ public class Demand
     public Coordinate getDestination() { return destination.getPosition(); }
     public ProductType getType() { return product.getType(); }
     public int getQuantity() { return product.getQuantity(); }
-    public int getVolume() { return product.getVolume(); }
+    public double getVolume() { return product.getVolume(); }
     public boolean isAssigned() { return isAssigned; }
 
     public int routeLength()

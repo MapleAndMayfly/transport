@@ -19,7 +19,6 @@ import com.tsAdmin.control.manager.CarManager;
 import com.tsAdmin.model.Car;
 import com.tsAdmin.model.CarStatistics;
 
-
 /**
  * 数据控制器
  * 主要处理前端发出的请求，返回JSON数据
@@ -48,6 +47,7 @@ public class DataController extends Controller
         List<Map<String, Object>> posList = DBManager.getCarList();
         renderJson(JsonKit.toJson(posList));
     }
+
     /**
      * 接收前端目标选择信号，从 Pareto 前沿中选择最优解
      */
@@ -65,7 +65,7 @@ public class DataController extends Controller
         }
 
         // 2. 获取 MOSAScheduler 实例
-        MOSAScheduler mosa = DataUpdater.getMosaScheduler();
+        MOSAScheduler mosa = DataUpdater.getScheduler();
         if (mosa == null) {
             renderJson(Map.of("code", 500, "msg", "MOSA 调度器未运行"));
             return;
@@ -85,6 +85,7 @@ public class DataController extends Controller
         // 5. 返回成功
         renderJson(Map.of("code", 200, "msg", "Pareto 解已更新"));
     }
+
     /**
      * 获取仪表盘数据
      * TODO: 修改仪表盘数据获取

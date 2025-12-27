@@ -1,0 +1,45 @@
+package com.tsAdmin.model.poi;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.tsAdmin.common.Coordinate;
+import com.tsAdmin.model.ProductType;
+
+public class ProcessPlant extends Purchaser implements Dumper
+{
+    private static final Logger logger = LogManager.getLogger(ProcessPlant.class);
+
+    private static double processingLoss;
+    private double processing;
+
+    public static void setProcessingLoss(int loss) { processingLoss = loss / 100.0; }
+
+    public ProcessPlant(String uuid, ProductType productType, Coordinate position, int maxStock)
+    {
+        super(uuid, productType, position, maxStock);
+    }
+
+    public void setProcessing(double processing) { this.processing = processing; }
+    public void addProcessing(double toProcess) { processing += toProcess; }
+
+    @Override
+    public void update()
+    {
+        // 模拟处理待处理货物
+        double completed = processing * stockAlterSpeed;
+
+        processing -= completed;
+        stock += completed * (1 - processingLoss);
+        if (stock > maxStock)
+        {
+            logger.warn("Stock(value:{}) of POI(UUID:{}) overflowed maximum stock(value:{})", stock, uuid, maxStock);
+        }
+
+        // 尝试根据库存生成订单
+        tryGenerateDemand(stock + processing * processingLoss);
+    }
+
+    @Override
+    public double getStock() { return stock; }
+}

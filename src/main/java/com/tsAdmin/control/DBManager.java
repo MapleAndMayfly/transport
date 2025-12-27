@@ -26,30 +26,6 @@ public class DBManager
     );
 
     /**
-     * 判断数据表是否为空
-     * @param tableName 数据表名
-     * @return {@code true} 如果查询出错（如表格不存在）或表格为空
-     */
-    public static boolean isTableEmpty(String tableName) { return getCount(tableName) <= 0; }
-
-    public static long getCount(String tableName)
-    {
-        try
-        {
-            String sql = "SELECT COUNT(*) AS count FROM " + tableName;
-            Record record = Db.findFirst(sql);
-            if (record == null) throw new RuntimeException("Query failed");
-
-            return record.getLong("count");
-        }
-        catch (Exception e)
-        {
-            logger.error("Failed to get count for {}", tableName, e);
-            return -1;
-        }
-    }
-
-    /**
      * 获取POI数据列表
      * @param type 要获取的对象类型，只能为 {@code POI_TABLES} 中的键所对应的字符串
      * @return 所有该类型 POI 数据的列表，每一条数据包含 id, name, location_lat, location_lon

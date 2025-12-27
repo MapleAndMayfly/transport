@@ -39,7 +39,7 @@
       "value": 5,
       "range": [1, 100]
     },
-    "Poi.processing_loss":
+    "ProcessingPlant.processing_loss":
     {
       "name": "工厂加工损耗",
       "type": "Integer",

@@ -6,12 +6,7 @@ import com.tsAdmin.control.manager.DemandManager;
 import com.tsAdmin.model.Assignment;
 import com.tsAdmin.model.Demand;
 import com.tsAdmin.model.Car;
-import com.tsAdmin.model.Product;
 import com.tsAdmin.control.manager.*;
-
-
-
-import com.tsAdmin.control.scheduler.BaseScheduler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -107,7 +102,7 @@ public class GreedyScheduler extends BaseScheduler
                     // 更新订单分配状态
 
                     int quantity = Math.min(demand.getQuantity(), bestCar.getMaxLoad());
-                    int volume = quantity / (demand.getQuantity() / demand.getVolume());
+                    double volume = quantity / (demand.getQuantity() / demand.getVolume());
                     demand.setQuantity(demand.getQuantity() - quantity);
                     demand.setVolume(demand.getVolume() - volume);
                     demand.setAssigned();

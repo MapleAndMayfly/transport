@@ -8,13 +8,12 @@ import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.common.PathNode;
 import com.tsAdmin.common.Timer;
 import com.tsAdmin.control.Main;
-import com.tsAdmin.control.scheduler.Scheduler;
 
 /** 车辆 */
 public class Car
 {
     /** 车辆状态 */
-    public static enum CarState
+    public enum CarState
     {
         /** 空闲 */
         AVAILABLE,
@@ -110,12 +109,10 @@ public class Car
         return ret;
     }
 
-    /** 计时器滴答一次，即向前进一周期 并记录时间*/
-    public void tick(CarState currState) 
+    /** 计时器滴答一次，即向前进一周期 并记录时间 */
+    public void tick(CarState currState)
     { 
-        if(currState == CarState.FREEZE || currState == CarState.AVAILABLE) statistics.plusIdleTime(Timer.TICK_SPEED);
-        else statistics.plusBusyTime(Timer.TICK_SPEED);
-        stateTimer.tick(); 
+        stateTimer.tick();
     }
 
     /**
@@ -137,9 +134,6 @@ public class Car
             switch (currState)
             {
                 case ORDER_TAKEN:
-                    double distance = Coordinate.distance(position,currDemand.getOrigin());
-                    statistics.plusTotalDistance(distance);
-                    if(load==0){ statistics.plusEmptyDistance(distance); }
                     position = currDemand.getOrigin();
                     nextState = CarState.LOADING;
                     break;
@@ -150,20 +144,14 @@ public class Car
 
                     nextState = nodeList.getFirst().isOrigin() ? CarState.ORDER_TAKEN : CarState.TRANSPORTING;
                     currDemand = nodeList.getFirst().getDemand();
-                    statistics.setCost(Scheduler.cost(maxLoad, nodeList.getFirst(), load, 0d, position));
-                    statistics.plusTotalCost(statistics.getCost());
                     break;
 
                 case TRANSPORTING:
-                    statistics.plusTotalDistance(Coordinate.distance(position,currDemand.getDestination()));
-                    statistics.plusAccWastedLoad(maxLoad-load);
                     position = currDemand.getDestination();
                     nextState = CarState.UNLOADING;
                     break;
 
                 case UNLOADING:
-                    statistics.plusCompleteCount();
-                    statistics.plusTotalWeight(currDemand.getQuantity());
                     load -= currDemand.getQuantity();
                     volume -= currDemand.getVolume();
 
@@ -171,8 +159,6 @@ public class Car
                     {
                         nextState = nodeList.getFirst().isOrigin() ? CarState.ORDER_TAKEN : CarState.TRANSPORTING;
                         currDemand = nodeList.getFirst().getDemand();
-                        statistics.setCost(Scheduler.cost(maxLoad, nodeList.getFirst(), load, 0d, position));
-                        statistics.plusTotalCost(statistics.getCost());
                     }
                     else
                     {
@@ -192,8 +178,6 @@ public class Car
                     if(nextState==CarState.ORDER_TAKEN)
                     { 
                         currDemand= nodeList.getFirst().getDemand();
-                        statistics.setCost(Scheduler.cost(maxLoad, nodeList.getFirst(), load, 0d, position)); 
-                        statistics.plusTotalCost(statistics.getCost());
                     }
                 default:
                     break;
