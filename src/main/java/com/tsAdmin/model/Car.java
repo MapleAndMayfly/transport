@@ -8,6 +8,7 @@ import com.tsAdmin.common.Coordinate;
 import com.tsAdmin.common.PathNode;
 import com.tsAdmin.common.Timer;
 import com.tsAdmin.control.Main;
+import com.tsAdmin.control.manager.DemandManager;
 
 /** 车辆 */
 public class Car
@@ -154,6 +155,7 @@ public class Car
                 case UNLOADING:
                     load -= currDemand.getQuantity();
                     volume -= currDemand.getVolume();
+                    DemandManager.removeDemand(currDemand.getUUID());
 
                     if (!nodeList.isEmpty())
                     {

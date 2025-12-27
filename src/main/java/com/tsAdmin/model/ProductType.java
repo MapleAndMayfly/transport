@@ -26,6 +26,8 @@ public enum ProductType
 
     public String getName() { return (String)params.get("name")[index]; }
 
+    public int getMaxQuantity() { return (int)params.get("maxQuantity")[index]; }
+
     public int getRandQuantity()
     {
         int minQuantity = (int)params.get("minQuantity")[index];

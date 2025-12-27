@@ -22,9 +22,9 @@ public abstract class Purchaser extends Poi
     /** 运往本 POI 的订单，若无则为 {@code null} */
     protected Demand demand = null;
 
-    public Purchaser(String uuid, ProductType productType, Coordinate position, int maxStock)
+    public Purchaser(String uuid, String name, ProductType productType, Coordinate position, int maxStock)
     {
-        super(uuid, productType, position, maxStock);
+        super(uuid, name, productType, position, maxStock);
     }
 
     public void addUpstream(String uuid)

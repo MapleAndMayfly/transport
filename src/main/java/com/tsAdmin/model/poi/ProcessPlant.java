@@ -15,9 +15,9 @@ public class ProcessPlant extends Purchaser implements Dumper
 
     public static void setProcessingLoss(int loss) { processingLoss = loss / 100.0; }
 
-    public ProcessPlant(String uuid, ProductType productType, Coordinate position, int maxStock)
+    public ProcessPlant(String uuid, String name, ProductType productType, Coordinate position, int maxStock)
     {
-        super(uuid, productType, position, maxStock);
+        super(uuid, name, productType, position, maxStock);
     }
 
     public void setProcessing(double processing) { this.processing = processing; }

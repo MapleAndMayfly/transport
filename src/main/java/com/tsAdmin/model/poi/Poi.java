@@ -6,6 +6,7 @@ import com.tsAdmin.model.ProductType;
 public abstract class Poi
 {
     protected final String uuid;
+    protected final String name;
     protected final ProductType productType;
     protected final Coordinate position;
     protected final int maxStock;
@@ -14,9 +15,10 @@ public abstract class Poi
 
     protected double stock;
 
-    public Poi(String uuid, ProductType productType, Coordinate position, int maxStock)
+    public Poi(String uuid, String name, ProductType productType, Coordinate position, int maxStock)
     {
         this.uuid = uuid;
+        this.name = name;
         this.productType = productType;
         this.position = position;
         this.maxStock = maxStock;

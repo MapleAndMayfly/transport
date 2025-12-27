@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.Db;
+import com.tsAdmin.common.ConfigLoader;
 import com.tsAdmin.model.Car;
 import com.tsAdmin.model.Demand;
 
@@ -16,38 +17,60 @@ public class DBManager
 {
     private static final Logger logger = LogManager.getLogger(DBManager.class);
 
-    private static final Map<String, String> POI_TABLES = Map.of(
-        "pharmaProducer", "pharmaceutical_producer",
-        "steelProducer", "steel_producer",
-        "woodProducer", "wood_producer",
-        "pharmaProcessor", "pharmaceutical_processor",
-        "steelProcessor", "steel_processor",
-        "woodProcessor", "wood_processor"
-    );
+    public static int getCount(String tableName)
+    {
+        String[] allowedTables = {"car", "demand", "poi_stock"};
+        boolean isValidTable = false;
+        for (String allowed : allowedTables)
+        {
+            if (allowed.equals(tableName))
+            {
+                isValidTable = true;
+                break;
+            }
+        }
+
+        if (!isValidTable)
+        {
+            logger.warn("Invalid table name: {}", tableName);
+            return 0;
+        }
+
+        String sql = "SELECT COUNT(*) AS count WHERE preset_UUID = ? FROM " + tableName;
+        Record record = Db.findFirst(sql, ConfigLoader.getConfigUUID());
+        return record != null ? record.getInt("count") : 0;
+    }
 
     /**
      * 获取POI数据列表
-     * @param type 要获取的对象类型，只能为 {@code POI_TABLES} 中的键所对应的字符串
-     * @return 所有该类型 POI 数据的列表，每一条数据包含 id, name, location_lat, location_lon
-     * @throws IllegalAgumentException 如果传入的POI类型未定义
+     * @return 所有该类型 POI 数据的列表，每一条数据包含 UUID, class, upstream, maxstock, type, name, lat, lon
      */
-    public static List<Map<String, Object>> getPoiList(String type)
+    public static List<Map<String, Object>> getPoiList()
     {
         try
         {
+            Map<String, String> POIs = Map.of(
+                "poi_market", "Market",
+                "poi_process_plant", "ProcessPlant",
+                "poi_resource_plant", "ResourcePlant"
+            );
             List<Map<String, Object>> poiList = new ArrayList<>();
-            String table = POI_TABLES.get(type);
-            if (table == null) throw new IllegalArgumentException("Invalid table type: " + type);
 
-            String sql = "SELECT location_ID, name, location_lat, location_lon FROM " + table;
-            List<Record> rawData = Db.find(sql);
-
-            if (rawData != null && !rawData.isEmpty())
+            for (String table : POIs.keySet())
             {
+                String sql = "SELECT location_ID, upstream_suppliers, maxstock, product_type, name, location_lat, location_lon FROM " + table;
+                List<Record> rawData = Db.find(sql);
+
+                if (rawData == null || rawData.isEmpty()) break;
+
                 for (Record record : rawData)
                 {
                     Map<String, Object> element = Map.of(
                         "UUID", record.get("location_ID"),
+                        "class", POIs.get(table),
+                        "upstream", record.get("upstream_suppliers"),
+                        "maxstock", record.get("maxstock"),
+                        "type", record.get("product_type"),
                         "name", record.get("name"),
                         "lat", record.get("location_lat"),
                         "lon", record.get("location_lon")
@@ -56,7 +79,7 @@ public class DBManager
                 }
             }
 
-            logger.debug("Got POI list({} total) form SQL table: {}", rawData != null ? rawData.size() : 0, table);
+            logger.debug("Got POI list({} total) form SQL", poiList.size());
             return poiList;
         }
         catch (Exception e)
@@ -64,6 +87,13 @@ public class DBManager
             logger.error("Failed to get POI list from SQL", e);
             return null;
         }
+    }
+
+    public static double getStock(String poiUuid)
+    {
+        String sql = "SELECT stock FROM poi_stock WHERE preset_UUID = ? AND poi_UUID = ? LIMIT 1";
+        Record record = Db.findFirst(sql, ConfigLoader.getConfigUUID(), poiUuid);
+        return record.getDouble("stock");
     }
 
     public static List<Map<String, String>> getDemandList()
@@ -90,7 +120,7 @@ public class DBManager
                 }
             }
 
-            logger.debug("Got demand list({} total) from SQL", rawData != null ? rawData.size() : 0);
+            logger.debug("Got demand list({} total) from SQL", demandList.size());
             return demandList;
         }
         catch (Exception e)
@@ -124,7 +154,7 @@ public class DBManager
                 }
             }
 
-            logger.debug("Got car list({} total) from SQL", rawData != null ? rawData.size() : 0);
+            logger.debug("Got car list({} total) from SQL", carList.size());
             return carList;
         }
         catch (Exception e)
@@ -136,10 +166,9 @@ public class DBManager
 
     public static List<Map<String, String>> getPresetList()
     {
-
         try
         {
-            List<Map<String, String>> presets = new ArrayList<>();
+            List<Map<String, String>> presetList = new ArrayList<>();
             String sql = "SELECT UUID, content FROM preset";
             List<Record> rawData = Db.find(sql);
 
@@ -151,12 +180,12 @@ public class DBManager
                         "UUID", record.getStr("UUID"),
                         "content", record.getStr("content")
                     );
-                    presets.add(element);
+                    presetList.add(element);
                 }
             }
 
-            logger.debug("Got preset list({} total) from SQL", rawData != null ? rawData.size() : 0);
-            return presets;
+            logger.debug("Got preset list({} total) from SQL", presetList.size());
+            return presetList;
         }
         catch (Exception e)
         {
@@ -424,9 +453,9 @@ public class DBManager
     //     Map<String, String> downstream_upstream = Map.of(
     //         "pharmaceutical_market", "pharmaceutical_processor",
     //         "pharmaceutical_processor", "pharmaceutical_producer",
-    //         "steel_market", "steel_processor",
+    //         "steel_processor", "steel_processor",
     //         "steel_processor", "steel_producer",
-    //         "wood_market", "wood_processor",
+    //         "wood_processor", "wood_processor",
     //         "wood_processor", "wood_producer"
     //     );
     //     String upstream_table = downstream_upstream.get(downstream_table);

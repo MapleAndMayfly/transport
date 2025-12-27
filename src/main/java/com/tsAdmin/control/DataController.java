@@ -28,13 +28,13 @@ public class DataController extends Controller
     private static final Logger logger = LogManager.getLogger(DataController.class);
 
     /**
-     * 获取所有POI数据
-     * <p>返回数据格式：[{"UUID":{@code String}, "name":{@code String}, "lat":{@code Double}, "lon":{@code Double}}, {...}, ...]
+     * 获取所有兴趣点数据
+     * <p>返回数据格式：[{"UUID":{@code String},"class":{@code String},"type":{@code String}, "name":{@code String}, "lat":{@code Double}, "lon":{@code Double}}, {...}, ...]
+     * 其中 {@code class} 值可能为 {@code ResourcePlant, ProcessPlant, Market} ；{@code type} 值可能为 {@code "WOOD", "STEEL", "PHARMA"}
      */
     public void getPoiData()
     {
-        String type = getPara("type");
-        List<Map<String, Object>> dataList = DBManager.getPoiList(type);
+        List<Map<String, Object>> dataList = DBManager.getPoiList();
         renderJson(JsonKit.toJson(dataList));
     }
 

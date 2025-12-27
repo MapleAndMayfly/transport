@@ -5,9 +5,9 @@ import com.tsAdmin.model.ProductType;
 
 public class ResourcePlant extends Poi implements Dumper
 {
-    public ResourcePlant(String uuid, ProductType productType, Coordinate position, int maxStock)
+    public ResourcePlant(String uuid, String name, ProductType productType, Coordinate position, int maxStock)
     {
-        super(uuid, productType, position, maxStock);
+        super(uuid, name, productType, position, maxStock);
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.tsAdmin.control.manager;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -13,8 +13,7 @@ import com.tsAdmin.model.poi.*;
 
 public class DemandManager
 {
-    /** FIXME: 没有删除死订单逻辑 */
-    public static List<Demand> demandList = new ArrayList<>();
+    public static Map<String, Demand> demandList = new HashMap<>();
 
     public static void init()
     {
@@ -33,7 +32,7 @@ public class DemandManager
             Product product = new Product(type, quantity, volume);
 
             Demand demand = new Demand(uuid, origin, destination, product);
-            demandList.add(demand);
+            demandList.put(uuid, demand);
         }
     }
 
@@ -50,7 +49,12 @@ public class DemandManager
         String uuid = UUID.randomUUID().toString().replace("-", "");
 
         Demand demand = new Demand(uuid, origin, destination, product);
-        demandList.add(demand);
+        demandList.put(uuid, demand);
         return demand;
+    }
+
+    public static void removeDemand(String uuid)
+    {
+        demandList.remove(uuid);
     }
 }

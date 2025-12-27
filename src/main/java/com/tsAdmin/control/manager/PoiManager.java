@@ -1,11 +1,15 @@
 package com.tsAdmin.control.manager;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.tsAdmin.common.ConfigLoader;
+import com.tsAdmin.common.Coordinate;
+import com.tsAdmin.control.DBManager;
+import com.tsAdmin.model.ProductType;
 import com.tsAdmin.model.poi.*;
 
 public class PoiManager
@@ -14,15 +18,67 @@ public class PoiManager
 
     public static Map<String, Poi> poiList = new HashMap<>();
 
+    public static Poi getPoi(String uuid) { return poiList.get(uuid); }
+
     public static void init()
     {
         poiList.clear();
 
         Poi.setStockAlterSpeed(ConfigLoader.getInt("Poi.stock_alter_speed"));
         ProcessPlant.setProcessingLoss(ConfigLoader.getInt("ProcessingPlant.processing_loss"));
-    }
 
-    public static Poi getPoi(String uuid) { return poiList.get(uuid); }
+        List<Map<String, Object>> dataList = DBManager.getPoiList();
+
+        for (Map<String, Object> data : dataList)
+        {
+            String uuid = (String)data.get("UUID");
+            String name = (String)data.get("name");
+            ProductType productType = ProductType.valueOf((String)data.get("type"));
+            Coordinate position = new Coordinate(
+                (double)data.get("lat"),
+                (double)data.get("lon")
+            );
+            int maxStock = (int)data.get("maxStock");
+
+            Poi toAdd = switch ((String)data.get("class"))
+            {
+                case "ResourcePlant" -> new ResourcePlant(uuid, name, productType, position, maxStock);
+                case "ProcessPlant" -> new ProcessPlant(uuid, name, productType, position, maxStock);
+                case "Market" -> new Market(uuid, name, productType, position, maxStock);
+                default -> null;
+            };
+            if (toAdd == null) throw new IllegalArgumentException();
+
+            // 为 Purchaser 增加上游兴趣点
+            if (toAdd instanceof Purchaser)
+            {
+                for (String upstreamUuid : data.get("upstream").toString().split(","))
+                {
+                    ((Purchaser)toAdd).addUpstream(upstreamUuid);
+                }
+            }
+
+            poiList.put(uuid, toAdd);
+        }
+
+        // 初始化兴趣点初始库存
+        if (DBManager.getCount("poi_stock") > 0)
+        {
+            for (Poi poi : poiList.values())
+            {
+                double stock = DBManager.getStock(poi.getUUID());
+                poi.setStock(stock);
+            }
+        }
+        else
+        {
+            for (Poi poi : poiList.values())
+            {
+                double stock = poi.getProductType().getMaxQuantity() * 5;
+                poi.setStock(stock);
+            }
+        }
+    }
 
     /** 更新所有兴趣点，每周期调用 */
     public static void update()

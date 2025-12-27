@@ -390,7 +390,7 @@ private List<Assignment> findIdealPointSolution(boolean[] selectedObjectives) {
         }
 
         List<Demand> pendingDemands = new ArrayList<>();
-        for (Demand demand : DemandManager.demandList)
+        for (Demand demand : DemandManager.demandList.values())
         {
             if (!demand.isAssigned())
             {

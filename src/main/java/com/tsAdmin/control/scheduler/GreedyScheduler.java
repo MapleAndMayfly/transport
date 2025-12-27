@@ -36,7 +36,7 @@ public class GreedyScheduler extends BaseScheduler
         
         // ========== 第一步：筛选未分配完成的demand ==========
         List<Demand> newDemands = new ArrayList<>();
-        for (Demand demand : DemandManager.demandList)
+        for (Demand demand : DemandManager.demandList.values())
         {
             if (!demand.isAssigned()) {
                 newDemands.add(demand);
